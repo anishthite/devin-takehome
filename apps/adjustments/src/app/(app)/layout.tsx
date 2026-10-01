@@ -13,7 +13,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <AppShell
-      appName="Adjustments"
       nav={
         <>
           <NavLink href="/">

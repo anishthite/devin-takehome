@@ -3,7 +3,7 @@
 Customer balance adjustments with maker-checker approval, built on the kit (`packages/kit`). An operator requests a credit or debit on a customer account; a different approver (an Admin above $10,000.00) approves it, and only then does the balance change in the customer database.
 
 ```bash
-npm run dev:adjustments:demo   # from the repo root: DEMO_MODE=true, in-memory database, http://localhost:3001
+npm run dev:adjustments:demo   # from the repo root: DEMO_MODE=true, in-memory database, http://localhost:3002
 ```
 
 ## Database

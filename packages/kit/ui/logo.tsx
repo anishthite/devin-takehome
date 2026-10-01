@@ -1,4 +1,5 @@
 import * as React from "react"
+import { APP_NAME } from "@kit/app"
 import { cn } from "@kit/lib/utils"
 
 function LogoMark({ className, ...props }: React.ComponentProps<"span">) {
@@ -18,7 +19,7 @@ function LogoMark({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
-function Logo({ className, name = "Ledger", ...props }: React.ComponentProps<"div"> & { name?: string }) {
+function Logo({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="logo"
@@ -26,7 +27,7 @@ function Logo({ className, name = "Ledger", ...props }: React.ComponentProps<"di
       {...props}
     >
       <LogoMark />
-      <span>{name}</span>
+      <span>{APP_NAME}</span>
     </div>
   )
 }
