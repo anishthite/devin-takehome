@@ -1,4 +1,4 @@
-import type { EntryStatus, LedgerEntry, PaymentMethod } from "./types.ts";
+import type { EntryStatus, LedgerEntry, PaymentMethod } from "@/lib/ledger/types";
 
 export const MOCK_OPENING_BALANCE_MINOR = 248_310_00;
 

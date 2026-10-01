@@ -3,6 +3,8 @@ import { ArrowLeftRight, CheckCircle2, LayoutDashboard, Settings } from "lucide-
 import { auth } from "@/auth";
 import { Logo } from "@/components/logo";
 import { NavLink } from "@/components/nav-link";
+import { DemoBanner } from "@/demo/banner";
+import { isDemoMode } from "@/demo/mode";
 import { UserMenu } from "@/components/user-menu";
 
 const SOON = [
@@ -40,6 +42,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {isDemoMode() && <DemoBanner />}
         <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6">
           <Logo className="md:hidden" />
           <div className="hidden md:block" />

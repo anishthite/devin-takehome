@@ -33,4 +33,13 @@ npm run dev                  # http://localhost:3000
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
-The dashboard currently renders deterministic sample data (`src/lib/ledger/mock.ts`) until the real ledger backend is connected.
+The dashboard currently renders deterministic sample data (`src/demo/ledger.ts`) until the real ledger backend is connected.
+
+## Demo mode (no Entra)
+
+```bash
+npm install
+npm run dev:demo             # DEMO_MODE=true, no env vars needed
+```
+
+Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra provider is replaced by an Auth.js credentials provider that signs you in as one of four mock personas (one per Ledger role), so the full proxy/session/role pipeline still runs. A banner marks every page as demo. Demo sessions carry `tenantId: "demo-tenant"` and are rejected when demo mode is off, and demo mode falls back to a fixed `AUTH_SECRET` only if none is set — never enable it in production.

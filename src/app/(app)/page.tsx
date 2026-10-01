@@ -2,7 +2,7 @@ import { ArrowDownLeft, ArrowUpRight, Clock, ShieldCheck, Wallet } from "lucide-
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/ledger/format";
-import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/lib/ledger/mock";
+import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/demo/ledger";
 import { summarize } from "@/lib/ledger/summary";
 import type { DailyFlow, EntryStatus } from "@/lib/ledger/types";
 import { ROLE_LABELS } from "@/lib/roles";

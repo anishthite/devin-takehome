@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { auth, signIn } from "@/auth";
 import { Logo, MicrosoftMark } from "@/components/logo";
+import { isDemoMode } from "@/demo/mode";
+import { DemoSignInOptions } from "@/demo/sign-in-options";
 
 const ERRORS: Record<string, string> = {
   AccessDenied:
     "Your account isn't allowed to use this app. Ask an admin to assign you a Ledger role in Microsoft Entra.",
+  CredentialsSignin: "Unknown demo persona. Pick one of the options below.",
   Configuration: "Sign-in is misconfigured on the server. Check the Entra app registration settings.",
 };
 
@@ -28,6 +31,8 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
 
   const errorCode = typeof params.error === "string" ? params.error : undefined;
   const error = errorCode ? (ERRORS[errorCode] ?? "Sign-in failed. Please try again.") : undefined;
+
+  const demo = isDemoMode();
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
@@ -52,7 +57,9 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
           <Logo className="text-lg lg:hidden" />
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
-            <p className="text-sm text-zinc-500">Use your work account to continue.</p>
+            <p className="text-sm text-zinc-500">
+              {demo ? "Choose a demo persona to explore the app." : "Use your work account to continue."}
+            </p>
           </div>
 
           {error && (
@@ -61,25 +68,31 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
             </div>
           )}
 
-          <form
-            action={async () => {
-              "use server";
-              await signIn("microsoft-entra-id", { redirectTo });
-            }}
-          >
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+          {demo ? (
+            <DemoSignInOptions redirectTo={redirectTo} />
+          ) : (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("microsoft-entra-id", { redirectTo });
+              }}
             >
-              <MicrosoftMark />
-              Sign in with Microsoft
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              >
+                <MicrosoftMark />
+                Sign in with Microsoft
+              </button>
+            </form>
+          )}
 
-          <p className="flex items-start gap-2 text-xs text-zinc-500">
-            <ShieldCheck className="mt-px size-4 shrink-0 text-emerald-600" />
-            Only members of your organization&apos;s Entra tenant with an assigned Ledger role can sign in.
-          </p>
+          {!demo && (
+            <p className="flex items-start gap-2 text-xs text-zinc-500">
+              <ShieldCheck className="mt-px size-4 shrink-0 text-emerald-600" />
+              Only members of your organization&apos;s Entra tenant with an assigned Ledger role can sign in.
+            </p>
+          )}
         </div>
       </section>
     </main>
