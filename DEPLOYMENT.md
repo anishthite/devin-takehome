@@ -14,7 +14,7 @@ app at build time.
 flowchart LR
     repo["Monorepo<br/>apps/* + packages/kit"]
     repo -- "npm run build -w apps/ledger" --> ledger["ledger.example.com<br/>Ledger app (kit included)"]
-    repo -- "npm run build -w apps/&lt;name&gt;" --> other["&lt;name&gt;.example.com<br/>Another app (kit included)"]
+    repo -- "npm run build -w apps/refunds" --> other["refunds.example.com<br/>Refunds app (kit included)"]
     ledger --> entra["Microsoft Entra ID"]
     other --> entra
     ledger -. optional .-> dv[("Dataverse")]
@@ -42,7 +42,7 @@ npm run start -w apps/<name>   # next start, Node 24+
 Every app has its own:
 
 - **Hostname.** Use one subdomain per app (`ledger.example.com`,
-  `<name>.example.com`). Don't run two apps on different paths of the same
+  `refunds.example.com`). Don't run two apps on different paths of the same
   host: their Auth.js session cookies have the same default name and would
   collide.
 - **Entra redirect URI.** Add

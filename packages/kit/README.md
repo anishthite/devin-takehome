@@ -1,6 +1,6 @@
 # App kit
 
-Reusable foundation for internal Next.js 16 apps: Microsoft Entra ID sign-in, hierarchical app roles, kit services (roles, maker-checker approvals, audit), optional Dataverse adapters, a zero-config demo mode and the shadcn-based UI library. The Ledger app in `apps/ledger/` is built on it.
+Reusable foundation for internal Next.js 16 apps: Microsoft Entra ID sign-in, hierarchical app roles, kit services (roles, maker-checker approvals, audit), optional Dataverse adapters, a zero-config demo mode and the shadcn-based UI library. The Ledger (`apps/ledger/`) and Refunds (`apps/refunds/`) apps are built on it.
 
 It's the `kit` npm workspace. Apps depend on `"kit"` and import it through the `@kit/*` path alias (`"@kit/*": ["../../packages/kit/*"]` in the app's `tsconfig.json`), so Next.js compiles the kit's TypeScript as source. Inside the kit the same alias maps to `./*`. Files covered by `node --test` use relative `.ts` imports so they run without a bundler.
 
@@ -10,6 +10,7 @@ It's the `kit` npm workspace. Apps depend on `"kit"` and import it through the `
 | `services/` | `currentActor()` / `requireRole()`, `RoleProvider`, approvals, `AuditLog` / `AuditReader`, and `getKitServices()` which picks implementations from env |
 | `dataverse/` | Dataverse Web API client and adapters for the kit services |
 | `demo/` | `DEMO_MODE`: mock Entra IdP, personas, in-memory mock Dataverse org, in-memory stores, demo sign-in UI |
+| `app.ts` | App branding (`APP_NAME`, `APP_HEADLINE`, `APP_TAGLINE`), read from `KIT_APP_*` env values |
 | `ui/` | Design system components, `theme.css` tokens and [`DESIGN.md`](ui/DESIGN.md) |
 | `components/` | App chrome built from `ui/`: `AppShell`, `NavLink`, `UserMenu`, avatars |
 | `lib/` | `cn()` and other shared helpers |
@@ -30,7 +31,11 @@ Next.js only discovers routes, the proxy and global CSS inside the app, so the a
 
 Pages then use `requireRole()` / `currentActor()` from `@kit/services/authz`, `getKitServices()` for approvals and audit, and components from `@kit/ui`.
 
-Still Ledger-specific: role names (`Ledger.*`), the `Logo` wordmark and the sign-in page copy.
+Branding: set `KIT_APP_NAME`, `KIT_APP_HEADLINE` and `KIT_APP_TAGLINE` in the app's `next.config.ts` `env`. The logo, sign-in page, 403 page and demo account picker use them, and fall back to the Ledger copy when they're unset.
+
+Still Ledger-specific: role names (`Ledger.*`) and the demo persona blurbs.
+
+The [`new-kit-app`](../../.agents/skills/new-kit-app/SKILL.md) skill covers the whole process, from scaffolding to tests and docs.
 
 ## Roles
 
