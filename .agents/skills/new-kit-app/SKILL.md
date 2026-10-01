@@ -82,9 +82,14 @@ Build the service with the kit's `memoryApprovalStore`, `memoryAuditLog` and `cr
 ## 7. Verify
 
 ```bash
-npm run lint && npm run typecheck && npm test && npm run build
+npm run lint && npm run typecheck && npm test && npm run build && npm run test:smoke
 npm run dev:<name>:demo        # http://localhost:<port>
 ```
+
+CI runs the same commands. Two root suites find the new app on their own:
+
+- `tests/conformance.test.ts` (in `npm test`) fails with a pointer to the fix if a step above was skipped: a missing kit file or script, a port or `KIT_APP_NAME` that another app already uses, a missing root script or doc mention, a mock IdP route without `demoOnly()`, or a page, route handler or exported server action without `requireRole()` / `currentActor()`.
+- `tests/smoke.test.ts` (`npm run test:smoke`) boots the production build, signs in as each persona and expects 200 or 403 on every static page from the role in its `requireRole()` call. Dynamic routes (`[id]`) aren't fetched, so cover them in unit tests. A 500 on any page fails the run. With `TEST_DATABASE_URL` set it also runs apps that have a `db:migrate` script on PostgreSQL. Only extra public API routes (proxy matcher exclusions under `api/`) are fetched signed out, and they must answer 200.
 
 `typecheck` runs `next typegen` first, which generates the `PageProps` and `LayoutProps` globals. Then test in the browser with the `kit-app-demo-testing` skill, and save screenshots in `apps/<name>/docs/screenshots/` with a README index.
 
