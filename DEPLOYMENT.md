@@ -56,7 +56,7 @@ Every app has its own:
 |---|---|
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | That app's registration |
 | `AUTH_SECRET` | A unique random value per app (`openssl rand -base64 32`) |
-| `AUTH_TRUST_HOST` | `true` everywhere except Vercel |
+| `AUTH_TRUST_HOST` | `true`, unless on Vercel or `AUTH_URL` is set (Auth.js trusts the host automatically then) |
 | `DEMO_MODE` | Unset. Never `true` in production |
 | `DATAVERSE_*` | Only if the app uses Dataverse (see the [kit README](packages/kit/README.md#dataverse-optional)) |
 
@@ -92,9 +92,11 @@ tenant:
   the browser reaches it through a different origin.
 - Set `AUTH_SECRET`. Without it the kit falls back to a fixed, publicly known
   demo secret.
-- The mock provider's signing key and authorization codes are kept in memory
-  for each process, so a sign-in that's in progress during a restart fails.
-  Existing sessions survive restarts because their cookies are encrypted with
-  `AUTH_SECRET`. Approvals and audit entries still reset on every restart.
+- The mock provider signs its authorization codes and ID tokens with an RSA
+  key that each process generates on startup. So a sign-in that's in progress
+  during a restart fails, and with more than one instance a sign-in fails
+  whenever two of its requests reach different instances. Existing sessions
+  survive restarts because their cookies are encrypted with `AUTH_SECRET`.
+  Approvals and audit entries still reset on every restart.
 - Never point a demo deployment at a real tenant or a real Dataverse
   environment.

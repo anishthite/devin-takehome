@@ -29,6 +29,8 @@ src/
   lib/ledger/     Ledger types, summary math, formatting and sample data
   proxy.ts        Requires sign-in on every route except sign-in, auth and demo-idp
 tests/            Unit tests for lib/ledger
+screenshots/      UI screenshots from a demo-mode production build
+AGENTS.md         Next.js agent notes (CLAUDE.md points here)
 ```
 
 The dashboard uses generated sample data (`src/lib/ledger/sample-data.ts`)
@@ -40,7 +42,7 @@ because there is no ledger backend yet.
 |---|---|
 | Supported account types | Single tenant |
 | Platform | Web |
-| Redirect URI | `http://localhost:3000/api/auth/callback/microsoft-entra-id` |
+| Redirect URI | `http://localhost:3000/api/auth/callback/microsoft-entra-id` (add `https://<host>/api/auth/callback/microsoft-entra-id` for each deployment) |
 | App roles | `Ledger.Viewer`, `Ledger.Operator`, `Ledger.Approver`, `Ledger.Admin` |
 | Enterprise app → Assignment required | Yes |
 
@@ -55,7 +57,7 @@ Copy `.env.example` to `.env.local`:
 |---|---|
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | The app registration above |
 | `AUTH_SECRET` | Session encryption key (`openssl rand -base64 32`) |
-| `AUTH_TRUST_HOST` | `true` unless deployed on Vercel or behind a trusted proxy |
+| `AUTH_TRUST_HOST` | `true` in production unless on Vercel or `AUTH_URL` is set (not needed for `npm run dev`) |
 | `DEMO_MODE` | `true` for mock Entra (never in production) |
 | `DATAVERSE_*` | Optional Dataverse integration, see the [kit README](../../packages/kit/README.md#dataverse-optional) |
 
@@ -63,3 +65,9 @@ Copy `.env.example` to `.env.local`:
 
 Run from the repo root (`npm run dev`, `npm run dev:demo`, ...) or from this
 folder. `npm test` runs `node --test` on `tests/`.
+
+## Deployment
+
+See [DEPLOYMENT.md](../../DEPLOYMENT.md). In short: one Next.js server per
+app, a single instance for now, because approvals and the audit log are
+kept in memory.

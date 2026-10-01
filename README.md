@@ -10,8 +10,16 @@ The repo is an npm workspaces monorepo:
 | [`apps/ledger/`](apps/ledger/README.md) | The Ledger app: pages, ledger logic, Next.js config and `.env`. |
 | [`packages/kit/`](packages/kit/README.md) | The app kit (`@kit/*`): auth, roles, services, Dataverse adapters, demo mode and the UI library. Shared by every app. |
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for how the pieces fit together and
-[DEPLOYMENT.md](DEPLOYMENT.md) for how each app is hosted.
+## Docs
+
+| Doc | What |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How the app and kit fit together, sign-in flow, run modes |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | How each app is hosted, per-app config, current limits |
+| [Ledger README](apps/ledger/README.md) | Pages, Entra app registration, env vars |
+| [Kit README](packages/kit/README.md) | Kit folders, wiring an app, demo mode, Dataverse |
+| [Design system](packages/kit/ui/DESIGN.md) | UI tokens, principles and components |
+| [Screenshots](apps/ledger/screenshots/README.md) | Ledger UI in demo mode |
 
 ## Quick start
 
