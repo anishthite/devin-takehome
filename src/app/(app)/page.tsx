@@ -1,6 +1,8 @@
 import { ArrowDownLeft, ArrowUpRight, Clock, ShieldCheck, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
+import { currentActor } from "@/lib/kit/authz";
+import { getKitServices } from "@/lib/kit/services";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/ledger/format";
 import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/demo/ledger";
 import { summarize } from "@/lib/ledger/summary";
@@ -67,6 +69,8 @@ function FlowChart({ daily }: { daily: DailyFlow[] }) {
 export default async function DashboardPage() {
   const session = await auth();
   const user = session?.user;
+  const actor = await currentActor();
+  const { dataverse } = await getKitServices();
   const now = new Date();
   const entries = mockLedger(now);
   const summary = summarize(entries, MOCK_OPENING_BALANCE_MINOR, now, 14);
@@ -148,9 +152,11 @@ export default async function DashboardPage() {
               <dd className="truncate font-medium">{user?.email ?? user?.name}</dd>
             </div>
             <div>
-              <dt className="text-xs text-zinc-500">Entra roles</dt>
+              <dt className="text-xs text-zinc-500">
+                {dataverse === "off" ? "Entra app roles" : "Dataverse security roles"}
+              </dt>
               <dd className="mt-1 flex flex-wrap gap-1.5">
-                {user?.roles.map((role) => (
+                {actor.roles.map((role) => (
                   <span
                     key={role}
                     className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700"
