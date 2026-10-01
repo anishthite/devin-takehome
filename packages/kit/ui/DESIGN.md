@@ -6,7 +6,7 @@ and numbers that line up. Everything in this folder is a shadcn/ui component
 (`new-york` style, Radix primitives) themed with the tokens below, plus a set
 of fintech-specific components built on top of them.
 
-- Tokens live in `kit/ui/theme.css` (imported by the app's `globals.css`) (`:root` + `.dark`), mapped into
+- Tokens live in `theme.css` (`:root` + `.dark`, imported by each app's `globals.css`), mapped into
   Tailwind v4 with `@theme inline`.
 - Add new shadcn components with `npx shadcn@latest add <name>`;
   `components.json` points the `ui` alias at `@kit/ui`.

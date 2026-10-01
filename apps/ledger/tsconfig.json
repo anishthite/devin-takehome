@@ -27,7 +27,7 @@
         "./src/*"
       ],
       "@kit/*": [
-        "./kit/*"
+        "../../packages/kit/*"
       ]
     },
     "allowImportingTsExtensions": true

@@ -1,8 +1,8 @@
 # App kit
 
-Reusable foundation for internal Next.js 16 apps: Microsoft Entra ID sign-in, hierarchical app roles, kit services (roles, maker-checker approvals, audit), optional Dataverse adapters, a zero-config demo mode and the shadcn-based UI library. The Ledger app in `src/` is built on it.
+Reusable foundation for internal Next.js 16 apps: Microsoft Entra ID sign-in, hierarchical app roles, kit services (roles, maker-checker approvals, audit), optional Dataverse adapters, a zero-config demo mode and the shadcn-based UI library. The Ledger app in `apps/ledger/` is built on it.
 
-Import with the `@kit/*` alias (`tsconfig.json`). Files covered by `node --test` use relative `.ts` imports so they run without a bundler.
+It's the `kit` npm workspace. Apps depend on `"kit"` and import it through the `@kit/*` path alias (`"@kit/*": ["../../packages/kit/*"]` in the app's `tsconfig.json`), so Next.js compiles the kit's TypeScript as source. Inside the kit the same alias maps to `./*`. Files covered by `node --test` use relative `.ts` imports so they run without a bundler.
 
 | Folder | What |
 |---|---|
@@ -17,7 +17,7 @@ Import with the `@kit/*` alias (`tsconfig.json`). Files covered by `node --test`
 
 ## Wiring an app
 
-Next.js only discovers routes, the proxy and global CSS inside the app, so the app keeps thin files that point at the kit:
+Next.js only discovers routes, the proxy and global CSS inside the app, so the app keeps thin files that point at the kit (paths relative to `apps/<app>/`):
 
 | App file | Contents |
 |---|---|
@@ -25,7 +25,7 @@ Next.js only discovers routes, the proxy and global CSS inside the app, so the a
 | `src/app/api/auth/[...nextauth]/route.ts` | `export const { GET, POST } = handlers` |
 | `src/app/signin/page.tsx`, `src/app/forbidden.tsx` | Re-export `@kit/auth/sign-in-page` / `@kit/auth/forbidden-page` |
 | `src/app/demo-idp/**` | Route handlers from `@kit/demo/idp/handlers` and the `@kit/demo/idp/login-page` account picker |
-| `src/app/globals.css` | Imports `tailwindcss`, `tw-animate-css` and `kit/ui/theme.css`, with `@source "../../kit"` |
+| `src/app/globals.css` | Imports `tailwindcss`, `tw-animate-css` and `packages/kit/ui/theme.css`, with `@source` pointing at `packages/kit` |
 | `src/app/(app)/layout.tsx` | `<AppShell nav={…}>` with the app's own navigation |
 
 Pages then use `requireRole()` / `currentActor()` from `@kit/services/authz`, `getKitServices()` for approvals and audit, and components from `@kit/ui`.

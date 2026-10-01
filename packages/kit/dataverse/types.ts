@@ -1,6 +1,6 @@
 /**
  * Dataverse Web API (v9.2) payload shapes, kept byte-for-byte compatible with what a real
- * organization returns so the in-memory mock in `kit/demo/dataverse/` and a live org are
+ * organization returns so the in-memory mock in `demo/dataverse/` and a live org are
  * interchangeable behind `DataverseClient`.
  */
 

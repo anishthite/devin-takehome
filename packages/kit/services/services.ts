@@ -20,7 +20,7 @@ import { cachePerSession, claimsRoleProvider, type RoleProvider } from "@kit/ser
 
 /**
  * `off`: Entra app-role claims, no Dataverse (default).
- * `mock`: DATAVERSE_ENABLED + DEMO_MODE, backed by the in-memory org in kit/demo/dataverse.
+ * `mock`: DATAVERSE_ENABLED + DEMO_MODE, backed by the in-memory org in demo/dataverse.
  * `live`: DATAVERSE_ENABLED against DATAVERSE_URL.
  */
 export type DataverseMode = "off" | "mock" | "live";
