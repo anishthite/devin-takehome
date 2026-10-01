@@ -13,6 +13,57 @@ packages/
   kit/            Shared foundation: auth, roles, services, Dataverse, demo mode, UI
 ```
 
+```mermaid
+flowchart TB
+    user(["Browser"])
+
+    subgraph app["apps/ledger"]
+        ledger["<b>Ledger app</b><br/>proxy · pages · ledger logic + sample data"]
+    end
+
+    subgraph kit["packages/kit (@kit/*)"]
+        direction LR
+        auth["<b>Auth</b><br/>Auth.js sessions<br/>tenant + role checks"]
+        ui["<b>UI</b><br/>design system<br/>AppShell"]
+        services["<b>Kit services</b><br/>roles · approvals · audit<br/>in-memory store"]
+        adapters["<b>Dataverse adapters</b><br/>roles · audit history<br/>approval mirror"]
+        services -. "DATAVERSE_ENABLED" .-> adapters
+    end
+
+    subgraph ext["External services"]
+        direction LR
+        mockEntra["Mock Entra<br/>/demo-idp"]
+        entra["Microsoft<br/>Entra ID"]
+        dataverse[("Microsoft<br/>Dataverse")]
+        mockDv[("Mock Dataverse<br/>in memory")]
+    end
+
+    user --> ledger
+    ledger --> auth
+    ledger --> ui
+    ledger --> services
+    auth -- "OpenID Connect" --> entra
+    auth -. "DEMO_MODE" .-> mockEntra
+    adapters -- "Web API" --> dataverse
+    adapters -. "DEMO_MODE" .-> mockDv
+
+    classDef appBox fill:#e0f2fe,stroke:#0284c7,color:#0f172a
+    classDef kitBox fill:#dcfce7,stroke:#16a34a,color:#0f172a
+    classDef msBox fill:#f1f5f9,stroke:#0078d4,color:#0f172a
+    classDef demoBox fill:#fef3c7,stroke:#d97706,color:#0f172a,stroke-dasharray:5 4
+    class ledger appBox
+    class auth,ui,services,adapters kitBox
+    class entra,dataverse msBox
+    class mockEntra,mockDv demoBox
+    style app fill:#f8fafc,stroke:#94a3b8
+    style kit fill:#f8fafc,stroke:#94a3b8
+    style ext fill:#f8fafc,stroke:#94a3b8
+```
+
+Solid arrows are production. Dotted arrows are optional: the Dataverse
+adapters only run with `DATAVERSE_ENABLED=true`, and with `DEMO_MODE=true` the
+dashed mocks take the place of Microsoft's services.
+
 The [README](README.md) covers setup, and each workspace has its own README:
 [Ledger](apps/ledger/README.md), [kit](packages/kit/README.md).
 
@@ -51,14 +102,29 @@ vars, so pages never need to know whether Dataverse or demo mode is on.
 
 ## How sign-in works
 
-1. A signed-out user is redirected to `/signin` and clicks "Sign in with
-   Microsoft".
-2. The server runs a standard OpenID Connect login with the company's Entra
-   tenant.
-3. The login is accepted only if the user belongs to that tenant and, unless
-   Dataverse is enabled, has at least one role.
-4. The user's ID, tenant and roles are stored in an encrypted cookie. Tokens
-   never reach the browser.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant A as Ledger app (proxy + kit auth)
+    participant E as Entra ID (or mock Entra in demo mode)
+
+    U->>A: Open any page
+    A-->>U: Not signed in, redirect to /signin
+    U->>A: "Sign in with Microsoft"
+    A-->>U: Redirect to Entra (PKCE, state, nonce)
+    U->>E: Sign in
+    E-->>U: Redirect back with an authorization code
+    U->>A: /api/auth/callback
+    A->>E: Exchange code for ID token
+    E-->>A: ID token (oid, tid, roles)
+    A->>A: Check tenant and roles
+    A-->>U: Encrypted session cookie, open the page
+```
+
+The login is accepted only if the user belongs to the tenant and, unless
+Dataverse is enabled, has at least one role. Only the user's ID, tenant and
+roles go into the encrypted cookie. Tokens never reach the browser.
 
 Roles are hierarchical: `Viewer` < `Operator` < `Approver` < `Admin`.
 
