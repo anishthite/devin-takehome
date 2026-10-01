@@ -1,47 +1,53 @@
 # Architecture
 
-Ledger is a Next.js 16 app for viewing payment activity and running
-maker-checker payment approvals. Users sign in with their company's Microsoft
-Entra ID account, and what they can do depends on their Ledger role. It can
-optionally connect to Microsoft Dataverse for roles, auditing and approvals.
-See the [README](README.md) for setup.
-
-## Main pieces
+This repo holds internal business apps that share one foundation, the **app
+kit**. Today there is one app, **Ledger**: a payment ledger with
+maker-checker approvals. Users sign in with their company's Microsoft Entra
+ID account, and what they can do depends on their role. Apps can optionally
+connect to Microsoft Dataverse for roles, auditing and approvals.
 
 ```
-src/
-  app/            Pages and routes
-  auth.ts         Sign-in configuration
-  proxy.ts        Route protection
-  lib/kit/        App services: roles, approvals, audit (pluggable)
-  lib/dataverse/  Optional Dataverse adapters for those services
-  lib/            Other business logic (roles, tenant checks, ledger math)
-  ui-components/  Design system
-  components/     App-specific UI built from the design system
-  demo/           Mocks: Entra, Dataverse, sample data, in-memory stores
-tests/            Unit tests
+apps/
+  ledger/         The Ledger app: pages and ledger-specific logic
+packages/
+  kit/            Shared foundation: auth, roles, services, Dataverse, demo mode, UI
 ```
 
-- **Pages (`src/app`)**: sign-in, plus an authenticated app shell with three
-  pages: Dashboard, Approvals and Audit (Audit is for Approvers and above).
-  Users without a role get a 403 page.
-- **Authentication (`auth.ts`, `proxy.ts`)**: Auth.js handles the Entra
-  sign-in on the server. Every page except sign-in requires a session.
-- **App services (`src/lib/kit`)**: the core of the app. Each service is an
-  interface: who the user is and which roles they have (`requireRole`), the
-  approval workflow, and the audit log. `services.ts` chooses the
-  implementation behind each one at startup.
-- **Dataverse adapters (`src/lib/dataverse`)**: optional implementations of
-  those services backed by the Dataverse Web API.
-- **Business logic (`src/lib`)**: plain TypeScript with no UI code, so it's
-  easy to test. Covers the role hierarchy, tenant validation and ledger
-  calculations.
-- **Design system (`src/ui-components`)**: shadcn-based components themed for
-  Ledger, plus finance-specific pieces (amounts, stat cards, charts,
-  transaction lists). Details are in
-  [`DESIGN.md`](src/ui-components/DESIGN.md).
-- **Demo mode (`src/demo`)**: lets the app run without real Microsoft
-  services (see below).
+The [README](README.md) covers setup, and each workspace has its own README:
+[Ledger](apps/ledger/README.md), [kit](packages/kit/README.md).
+
+## Apps vs. the kit
+
+The kit holds everything that isn't specific to one app; each app only adds
+its own pages and domain logic.
+
+| | Kit (`packages/kit`) | App (`apps/ledger`) |
+|---|---|---|
+| Sign-in | Auth.js + Entra config, sign-in and 403 pages | Small files that point Next.js at the kit |
+| Roles and access | Role hierarchy, `requireRole()` | Decides which pages need which role |
+| Business services | Approvals, audit log, Dataverse adapters | Uses them in its pages |
+| UI | Design system and the app shell (sidebar, header, user menu) | Its own navigation and pages |
+| Demo mode | Mock Entra, mock Dataverse, demo users | Nothing extra |
+| Domain logic | None | Ledger types, summary math, sample data |
+
+Apps import the kit as `@kit/*`, and Next.js compiles it from source, so
+there is no separate build step for the kit. Next.js only finds routes and
+middleware inside the app, which is why the app keeps those small pass-through
+files.
+
+## Kit services
+
+The kit's core is a set of services, each defined as an interface:
+
+- **Roles**: who the user is and which roles they have.
+- **Approvals**: maker-checker. An Operator submits a payment, a *different*
+  Approver decides, and the requester can cancel. The kit's own store is the
+  source of truth.
+- **Audit**: every approval action goes to the kit's audit log. With
+  Dataverse on, the audit view also shows Dataverse change history.
+
+`getKitServices()` picks the implementation behind each service from env
+vars, so pages never need to know whether Dataverse or demo mode is on.
 
 ## How sign-in works
 
@@ -50,58 +56,34 @@ tests/            Unit tests
 2. The server runs a standard OpenID Connect login with the company's Entra
    tenant.
 3. The login is accepted only if the user belongs to that tenant and, unless
-   Dataverse is enabled, has at least one Ledger role.
+   Dataverse is enabled, has at least one role.
 4. The user's ID, tenant and roles are stored in an encrypted cookie. Tokens
    never reach the browser.
 
 Roles are hierarchical: `Viewer` < `Operator` < `Approver` < `Admin`.
 
-## Approvals and audit
+## Run modes
 
-- **Approvals**: maker-checker. An Operator submits a payment; a *different*
-  Approver approves or rejects it; the requester can cancel. The app's own
-  approval store is the source of truth.
-- **Audit**: every approval action is written to the app's audit log. The
-  Audit page shows it, merged with Dataverse change history when Dataverse is
-  on.
+Two env vars choose what the app talks to:
 
-## Dataverse (optional)
+| | `DATAVERSE_ENABLED` off | `DATAVERSE_ENABLED=true` |
+|---|---|---|
+| **Normal** | Real Entra; roles from Entra app roles | Real Entra + real Dataverse; roles from Dataverse security roles |
+| **`DEMO_MODE=true`** | Mock Entra | Mock Entra + in-memory mock Dataverse |
 
-Off by default; turn it on with `DATAVERSE_ENABLED=true`. When it's on:
-
-- **Roles** come from the user's Dataverse security roles instead of Entra
-  app roles. They are looked up once per session.
-- **Writes** go through an application user that acts on behalf of the
-  signed-in user, so Dataverse records who made each change.
-- **Approval status** is copied to an app-owned Dataverse table.
-- **Existing Power Automate approvals** are shown on the Approvals page,
-  read-only.
-
-`services.ts` runs in one of three modes: `off`, `live` (a real Dataverse
-environment) or `mock` (an in-memory Dataverse when demo mode is also on).
-
-## Demo mode
-
-Setting `DEMO_MODE=true` replaces the Microsoft services with in-app mocks:
-
-- **Entra**: a small mock Entra server and four demo users, one per role.
-- **Dataverse** (only with `DATAVERSE_ENABLED=true`): an in-memory Dataverse
-  organization that answers the same Web API calls.
-
-Everything else (Auth.js, sessions, tenant and role checks, route protection,
-the approval and audit services, and the Dataverse adapters) runs the same
-code as in production. Demo mode also seeds a couple of sample approvals.
+Demo mode mocks only the Microsoft services. Sign-in, sessions, tenant and
+role checks, route protection, the kit services and the Dataverse adapters
+all run the same code in every mode.
 
 ## Data and storage
 
-There is no database or ledger backend yet. In **both** demo and real mode:
-
-- the dashboard shows generated sample payments (`src/demo/ledger.ts`)
-- the approval store and audit log are kept in memory and reset on restart
-  (`src/demo/approvals.ts`, `src/demo/audit-log.ts`)
+There is no database or ledger backend yet. In every mode, the dashboard
+shows generated sample payments, and the approval store and audit log are
+kept in memory, so they reset on restart.
 
 ## Quality checks
 
-`npm run lint`, `npm run typecheck`, `npm test` and `npm run build`, all run in
-CI. Tests cover the business logic, the app services, the Dataverse adapters
-(against the mock organization) and the full demo sign-in flow.
+`npm run lint`, `npm run typecheck`, `npm test` and `npm run build` run
+across both workspaces in CI. Kit tests cover auth, roles, the services, the
+Dataverse adapters (against the mock organization) and the full demo sign-in
+flow. Ledger tests cover the ledger math.
