@@ -9,6 +9,7 @@ The repo is an npm workspaces monorepo:
 |---|---|
 | [`apps/ledger/`](apps/ledger/README.md) | The Ledger app: pages, ledger logic, Next.js config and `.env`. |
 | [`packages/kit/`](packages/kit/README.md) | The app kit (`@kit/*`): auth, roles, services, Dataverse adapters, demo mode and the UI library. Shared by every app. |
+| [`apps/refunds/`](apps/refunds/README.md) | Refunds dashboard on port 3001: request → maker-checker approval → payout, with RBAC and an audit log. |
 
 ## Docs
 
@@ -44,7 +45,9 @@ npm run dev                                          # http://localhost:3000
 | `npm run dev` | Ledger against real Entra |
 | `npm run dev:demo` | Ledger in demo mode (mock Entra) |
 | `npm run dev:demo:dataverse` | Demo mode with the in-memory mock Dataverse |
-| `npm run build` / `npm start` | Production build and server for Ledger |
+| `npm run dev:refunds` / `dev:refunds:demo` / `dev:refunds:demo:dataverse` | The same three modes for Refunds, on http://localhost:3001 |
+| `npm run build` | Production build of both apps |
+| `npm start` | Production server for Ledger |
 | `npm run lint` / `npm run typecheck` / `npm test` | Checks across all workspaces (all run in CI) |
 
 ## Adding an app

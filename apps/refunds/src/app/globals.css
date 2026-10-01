@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../../../../packages/kit/ui/theme.css";
+
+@source "../../../../packages/kit";

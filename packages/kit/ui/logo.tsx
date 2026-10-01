@@ -1,4 +1,5 @@
 import * as React from "react"
+import { APP_NAME } from "@kit/app"
 import { cn } from "@kit/lib/utils"
 
 function LogoMark({ className, ...props }: React.ComponentProps<"span">) {
@@ -26,7 +27,7 @@ function Logo({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     >
       <LogoMark />
-      <span>Ledger</span>
+      <span>{APP_NAME}</span>
     </div>
   )
 }
