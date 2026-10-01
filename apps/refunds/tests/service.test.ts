@@ -5,7 +5,7 @@ import { memoryAuditLog } from "../../../packages/kit/demo/audit-log.ts";
 import type { Actor } from "../../../packages/kit/services/actor.ts";
 import { createApprovalService } from "../../../packages/kit/services/approvals.ts";
 import { memoryRefundStore } from "../src/lib/refunds/store.ts";
-import { canApprove, createRefundService, RefundError } from "../src/lib/refunds/service.ts";
+import { canApprove, canDecide, createRefundService, RefundError } from "../src/lib/refunds/service.ts";
 import type { NewRefund, Refund } from "../src/lib/refunds/types.ts";
 
 const viewer: Actor = { id: "v", name: "Vic Viewer", roles: ["Ledger.Viewer"] };
@@ -90,7 +90,9 @@ test("refunds over the threshold need an Admin to approve, but an Approver may r
   const { refunds } = setup();
   const big = await refunds.request(operator, input({ amountMinor: 3_000_00 }));
   assert.equal(canApprove(approver, big), false);
+  assert.equal(canDecide(approver, big), true);
   assert.equal(canApprove(admin, big), true);
+  assert.equal(canDecide(viewer, big), false);
   await assert.rejects(refunds.decide(approver, big.id, "approved"), /need an Admin/);
   assert.equal((await refunds.decide(admin, big.id, "approved")).status, "approved");
 

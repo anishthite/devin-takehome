@@ -17,7 +17,7 @@ import { AuditTimeline } from "@/components/audit-timeline";
 import { RefundStatusBadge } from "@/components/refund-status-badge";
 import { formatDateTime, formatMoney } from "@/lib/refunds/format";
 import { getRefunds } from "@/lib/refunds/server";
-import { ADMIN_APPROVAL_THRESHOLD_MINOR, canApprove, needsAdminApproval } from "@/lib/refunds/service";
+import { ADMIN_APPROVAL_THRESHOLD_MINOR, canApprove, canDecide, needsAdminApproval } from "@/lib/refunds/service";
 import { REASON_LABELS } from "@/lib/refunds/types";
 import { cancelRefund, decideRefund, issueRefund } from "../actions";
 
@@ -44,16 +44,17 @@ export default async function RefundPage({ params, searchParams }: PageProps<"/r
 
   const pending = refund.status === "pending_approval";
   const ownRequest = refund.requestedById === actor.id;
-  const mayDecide = pending && canApprove(actor, refund);
+  const mayDecide = pending && canDecide(actor, refund);
+  const mayApprove = mayDecide && canApprove(actor, refund);
   const mayCancel = pending && ownRequest && !refund.sample;
   const mayIssue = refund.status === "approved" && hasRole(actor.roles, "Ledger.Operator");
   const adminOnly = needsAdminApproval(refund);
 
   let lockedReason: string | null = null;
-  if (pending && !mayDecide) {
+  if (pending && !mayApprove) {
     if (ownRequest) lockedReason = "You requested this refund, so someone else has to approve it.";
-    else if (adminOnly && hasRole(actor.roles, "Ledger.Approver"))
-      lockedReason = `Refunds over ${formatMoney(ADMIN_APPROVAL_THRESHOLD_MINOR)} need an Admin to approve.`;
+    else if (mayDecide)
+      lockedReason = `Refunds over ${formatMoney(ADMIN_APPROVAL_THRESHOLD_MINOR)} need an Admin to approve. You can still reject it.`;
     else lockedReason = "Waiting on an approver.";
   }
 
@@ -139,9 +140,11 @@ export default async function RefundPage({ params, searchParams }: PageProps<"/r
                 <input type="hidden" name="id" value={refund.id} />
                 <Textarea name="comment" placeholder="Comment (optional)" aria-label="Decision comment" />
                 <div className="flex gap-2">
-                  <Button type="submit" name="decision" value="approved" variant="brand" className="flex-1">
-                    Approve
-                  </Button>
+                  {mayApprove && (
+                    <Button type="submit" name="decision" value="approved" variant="brand" className="flex-1">
+                      Approve
+                    </Button>
+                  )}
                   <Button type="submit" name="decision" value="rejected" variant="outline" className="flex-1">
                     Reject
                   </Button>

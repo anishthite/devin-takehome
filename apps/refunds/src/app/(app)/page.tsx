@@ -17,7 +17,7 @@ import { RefundsChart, RefundsChartLegend } from "@/components/refunds-chart";
 import { formatCompactMoney, formatDate, formatHours, formatMoney } from "@/lib/refunds/format";
 import { permissionsFor } from "@/lib/refunds/permissions";
 import { getRefunds } from "@/lib/refunds/server";
-import { canApprove } from "@/lib/refunds/service";
+import { canApprove, canDecide } from "@/lib/refunds/service";
 import { summarize } from "@/lib/refunds/summary";
 import { REASON_LABELS } from "@/lib/refunds/types";
 
@@ -35,10 +35,10 @@ export default async function DashboardPage() {
   }));
   const reasonTotal = summary.byReason.reduce((sum, r) => sum + r.amountMinor, 0);
 
-  const toApprove = refunds.filter((r) => r.status === "pending_approval" && canApprove(actor, r));
+  const toDecide = refunds.filter((r) => r.status === "pending_approval" && canDecide(actor, r));
   const toIssue = hasRole(actor.roles, "Ledger.Operator") ? refunds.filter((r) => r.status === "approved") : [];
   const attention = [
-    ...toApprove.map((r) => ({ refund: r, action: "Approve" })),
+    ...toDecide.map((r) => ({ refund: r, action: canApprove(actor, r) ? "Approve" : "Review" })),
     ...toIssue.map((r) => ({ refund: r, action: "Issue" })),
   ];
 

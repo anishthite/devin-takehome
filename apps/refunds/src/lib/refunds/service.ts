@@ -54,9 +54,13 @@ export const needsAdminApproval = (refund: Pick<Refund, "amountMinor">) =>
   refund.amountMinor > ADMIN_APPROVAL_THRESHOLD_MINOR;
 
 /** Whether `actor` may approve `refund` (ignoring its status). */
+/** Approve or reject: any Approver other than the requester. */
+export function canDecide(actor: Actor, refund: Refund): boolean {
+  return refund.requestedById !== actor.id && hasRole(actor.roles, "Ledger.Approver");
+}
+
 export function canApprove(actor: Actor, refund: Refund): boolean {
-  if (refund.requestedById === actor.id) return false;
-  return hasRole(actor.roles, needsAdminApproval(refund) ? "Ledger.Admin" : "Ledger.Approver");
+  return canDecide(actor, refund) && (!needsAdminApproval(refund) || hasRole(actor.roles, "Ledger.Admin"));
 }
 
 const randomRef = () => `re_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
