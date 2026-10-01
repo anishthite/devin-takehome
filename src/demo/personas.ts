@@ -1,6 +1,7 @@
 import type { Role } from "../lib/roles.ts";
 
 export interface DemoPersona {
+  /** Mock Entra object id (`oid`). */
   id: string;
   name: string;
   email: string;

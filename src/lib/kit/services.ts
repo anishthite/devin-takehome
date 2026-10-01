@@ -1,0 +1,114 @@
+import { SESSION_MAX_AGE_SECONDS } from "@/auth";
+import { memoryApprovalStore } from "@/demo/approvals";
+import { memoryAuditLog } from "@/demo/audit-log";
+import { createMockDataverse } from "@/demo/dataverse/client";
+import { MOCK_ROLE_MAPPING, mockFlowApprovals } from "@/demo/dataverse/org";
+import { DEMO_PERSONAS } from "@/demo/personas";
+import { isDemoMode } from "@/demo/mode";
+import { approvalStatusMirror } from "@/lib/dataverse/approval-mirror";
+import { dataverseAuditReader } from "@/lib/dataverse/audit-reader";
+import type { DataverseClient } from "@/lib/dataverse/client";
+import { isDataverseEnabled, readConnection, readMirrorPrefix, readRoleMapping } from "@/lib/dataverse/config";
+import { flowApprovalReader, type PowerAutomateApprovalReader } from "@/lib/dataverse/flow-approvals";
+import { clientCredentialsTokenSource, httpDataverseClient } from "@/lib/dataverse/http-client";
+import { dataverseRoleProvider } from "@/lib/dataverse/role-provider";
+import type { Actor } from "@/lib/kit/actor";
+import { createApprovalService, type ApprovalService } from "@/lib/kit/approvals";
+import type { AuditLog } from "@/lib/kit/audit-log";
+import type { AuditReader } from "@/lib/kit/audit-reader";
+import { cachePerSession, claimsRoleProvider, type RoleProvider } from "@/lib/kit/role-provider";
+
+/**
+ * `off`: Entra app-role claims, no Dataverse (default).
+ * `mock`: DATAVERSE_ENABLED + DEMO_MODE, backed by the in-memory org in src/demo/dataverse.
+ * `live`: DATAVERSE_ENABLED against DATAVERSE_URL.
+ */
+export type DataverseMode = "off" | "mock" | "live";
+
+export interface KitServices {
+  dataverse: DataverseMode;
+  roles: RoleProvider;
+  auditLog: AuditLog;
+  /** Null when Dataverse is off. */
+  auditReader: AuditReader | null;
+  approvals: ApprovalService;
+  /** Null when Dataverse is off. */
+  flowApprovals: PowerAutomateApprovalReader | null;
+}
+
+const MOCK_MIRROR_PREFIX = "cr7f3_";
+
+function connect(demo: boolean): { client: DataverseClient; mirrorPrefix: string | null } {
+  if (demo) {
+    const { approvals, responses } = mockFlowApprovals(new Date());
+    const { client } = createMockDataverse({
+      seed: { msdyn_flow_approvals: approvals, msdyn_flow_approvalresponses: responses },
+    });
+    return { client, mirrorPrefix: readMirrorPrefix() ?? MOCK_MIRROR_PREFIX };
+  }
+  const connection = readConnection();
+  return {
+    client: httpDataverseClient(connection, clientCredentialsTokenSource(connection)),
+    mirrorPrefix: readMirrorPrefix(),
+  };
+}
+
+async function seedDemoApprovals(approvals: ApprovalService) {
+  const [, approver, operator] = DEMO_PERSONAS;
+  const as = (persona: (typeof DEMO_PERSONAS)[number], roles: Actor["roles"]): Actor => ({
+    id: persona.id,
+    name: persona.name,
+    roles,
+  });
+  const maker = as(operator, ["Ledger.Operator"]);
+  const lease = await approvals.submit(maker, { title: "Office lease — October", counterparty: "Litware Leasing", amountMinor: 12_500_00 });
+  await approvals.decide(as(approver, ["Ledger.Approver"]), lease.id, "approved", "Matches the lease schedule.");
+  await approvals.submit(maker, { title: "Vendor payout", counterparty: "Proseware", amountMinor: 2_150_00 });
+}
+
+async function build(): Promise<KitServices> {
+  const demo = isDemoMode();
+  const auditLog = memoryAuditLog();
+  const store = memoryApprovalStore();
+
+  let services: KitServices;
+  if (!isDataverseEnabled()) {
+    services = {
+      dataverse: "off",
+      roles: claimsRoleProvider,
+      auditLog,
+      auditReader: null,
+      approvals: createApprovalService({ store, auditLog, mirror: null }),
+      flowApprovals: null,
+    };
+  } else {
+    const { client, mirrorPrefix } = connect(demo);
+    const mapping = demo ? MOCK_ROLE_MAPPING : readRoleMapping();
+    services = {
+      dataverse: demo ? "mock" : "live",
+      roles: cachePerSession(dataverseRoleProvider(client, mapping), SESSION_MAX_AGE_SECONDS * 1000),
+      auditLog,
+      auditReader: dataverseAuditReader(client),
+      approvals: createApprovalService({
+        store,
+        auditLog,
+        mirror: mirrorPrefix ? approvalStatusMirror(client, mirrorPrefix) : null,
+      }),
+      flowApprovals: flowApprovalReader(client),
+    };
+  }
+
+  if (demo) await seedDemoApprovals(services.approvals);
+  return services;
+}
+
+const store = globalThis as typeof globalThis & { __ledgerKitServices?: Promise<KitServices> };
+
+/** Process-wide kit services, selected by DATAVERSE_ENABLED (and DEMO_MODE for the mock org). */
+export function getKitServices(): Promise<KitServices> {
+  store.__ledgerKitServices ??= build().catch((error: unknown) => {
+    store.__ledgerKitServices = undefined;
+    throw error;
+  });
+  return store.__ledgerKitServices;
+}
