@@ -4,8 +4,8 @@ import type { ApprovalRequest, ApprovalStore } from "../services/approvals.ts";
 export function memoryApprovalStore(): ApprovalStore {
   const rows = new Map<string, ApprovalRequest>();
   return {
-    async list() {
-      return [...rows.values()].map((r) => structuredClone(r));
+    async list(filter) {
+      return [...rows.values()].filter((r) => !filter?.kind || r.kind === filter.kind).map((r) => structuredClone(r));
     },
     async get(id) {
       const row = rows.get(id);

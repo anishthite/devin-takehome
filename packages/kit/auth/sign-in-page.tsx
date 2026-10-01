@@ -26,7 +26,34 @@ function safeRedirect(value: string | string[] | undefined): string {
   }
 }
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export interface SignInBrand {
+  appName: string;
+  headline: string;
+  tagline: string;
+}
+
+const LEDGER: SignInBrand = {
+  appName: "Ledger",
+  headline: "Every payment, accounted for.",
+  tagline: "Track inflows, outflows and approvals across your organization",
+};
+
+/** Sign-in page with an app's own wordmark and copy; the default export is Ledger's. */
+export function createSignInPage(brand: SignInBrand) {
+  return function SignInPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+    return <BrandedSignInPage brand={brand} {...props} />;
+  };
+}
+
+export default createSignInPage(LEDGER);
+
+async function BrandedSignInPage({
+  brand,
+  searchParams,
+}: {
+  brand: SignInBrand;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const params = await searchParams;
   const redirectTo = safeRedirect(params.callbackUrl);
   if (await auth()) redirect(redirectTo);
@@ -40,22 +67,20 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <section className="dark hidden bg-ink-glow p-12 text-ink-foreground lg:flex lg:flex-col lg:justify-between">
-        <Logo className="text-lg" />
+        <Logo className="text-lg" name={brand.appName} />
         <div className="max-w-md space-y-4">
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            Every payment, accounted for.
-          </h1>
+          <h1 className="text-4xl font-semibold leading-tight tracking-tight">{brand.headline}</h1>
           <p className="text-muted-foreground">
-            Track inflows, outflows and approvals across your organization
+            {brand.tagline}
             {demo ? " — shown here with sample data." : " — secured by your company’s Microsoft Entra ID."}
           </p>
         </div>
-        <p className="text-sm text-muted-foreground/80">© {new Date().getFullYear()} Ledger</p>
+        <p className="text-sm text-muted-foreground/80">© {new Date().getFullYear()} {brand.appName}</p>
       </section>
 
       <section className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm space-y-8">
-          <Logo className="text-lg lg:hidden" />
+          <Logo className="text-lg lg:hidden" name={brand.appName} />
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
             <p className="text-sm text-muted-foreground">

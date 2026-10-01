@@ -9,6 +9,7 @@ It's the `kit` npm workspace. Apps depend on `"kit"` and import it through the `
 | `auth/` | Auth.js config (`@kit/auth`: `auth`, `signIn`, `signOut`, `handlers`), Entra tenant checks, roles, sign-in and 403 pages |
 | `services/` | `currentActor()` / `requireRole()`, `RoleProvider`, approvals, `AuditLog` / `AuditReader`, and `getKitServices()` which picks implementations from env |
 | `dataverse/` | Dataverse Web API client and adapters for the kit services |
+| `sql/` | `SqlClient` connector: PostgreSQL (`pg`) adapter, `pg-mem` mock, env config, migrations, SQL-backed audit log and approval store |
 | `demo/` | `DEMO_MODE`: mock Entra IdP, personas, in-memory mock Dataverse org, in-memory stores, demo sign-in UI |
 | `ui/` | Design system components, `theme.css` tokens and [`DESIGN.md`](ui/DESIGN.md) |
 | `components/` | App chrome built from `ui/`: `AppShell`, `NavLink`, `UserMenu`, avatars |
@@ -30,4 +31,19 @@ Next.js only discovers routes, the proxy and global CSS inside the app, so the a
 
 Pages then use `requireRole()` / `currentActor()` from `@kit/services/authz`, `getKitServices()` for approvals and audit, and components from `@kit/ui`.
 
-Still Ledger-specific: role names (`Ledger.*`), the `Logo` wordmark and the sign-in page copy.
+Still Ledger-specific: role names (`Ledger.*`) and the demo persona blurbs. `AppShell` takes an `appName` and `createSignInPage()` an app name and copy.
+
+## SQL connector
+
+`@kit/sql` is a small typed connector for an external PostgreSQL database. Apps depend on the `SqlClient` interface (`query` with `$1` parameters, `transaction`, `ping`, `close`), never on `pg` directly.
+
+| File | What |
+|---|---|
+| `client.ts` | `SqlClient` / `SqlExecutor` types, SQLSTATE helpers, `toSafeInteger` for `bigint` money columns |
+| `config.ts` | `readSqlConfig()` from `DATABASE_URL`, `DATABASE_SSL` (`require` default for remote hosts, `no-verify`, `disable`; `disable` refused for remote hosts in production), `DATABASE_POOL_MAX`, `DATABASE_STATEMENT_TIMEOUT_MS`, `DATABASE_APPLICATION_NAME` |
+| `postgres.ts` | `pg.Pool` adapter. Queries inside `transaction()` join it via `AsyncLocalStorage` (nested calls reuse it); serialization failures and deadlocks are retried |
+| `mock.ts` | `createMockSqlClient()`: in-memory `pg-mem` behind the same adapter, with rollback, for tests and demo mode |
+| `migrate.ts`, `migrations.ts` | `runMigrations()` (ordered, recorded in `kit_schema_migrations`, one transaction each) and the kit's own tables |
+| `audit-log.ts`, `approval-store.ts` | SQL implementations of `AuditLog` and `ApprovalStore`, used by `getKitServices()` when `DATABASE_URL` is set |
+
+Approvals carry a `kind` (default `"payment"`) and typed `details`, so several apps can share the kit approval queue; `decide(…, { kind, onApproved })` refuses requests of another kind and runs `onApproved` (the money movement) in the same transaction as the decision. Wrap other changes in `withAudit(auditLog, actor, { action, target, changes }, change, transaction)` so the audit entry is written only if the change succeeds, and atomically with it.

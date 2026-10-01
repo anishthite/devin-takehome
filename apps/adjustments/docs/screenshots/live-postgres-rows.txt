@@ -1,0 +1,41 @@
+# Live PostgreSQL 16 run (DATABASE_URL set, after the live-* screenshots)
+
+$ curl localhost:3001/api/health
+{"status":"ok","database":"postgres"}
+
+select id from kit_schema_migrations order by id
+                 id                  
+-------------------------------------
+ adjustments_001_customer_accounts
+ adjustments_002_balance_adjustments
+ kit_001_audit_log
+ kit_002_approval_requests
+(4 rows)
+
+select name, balance_minor, version from customer_accounts where account_number='ACC-100318'
+       name       | balance_minor | version 
+------------------+---------------+---------
+ Contoso Pharmacy |        123990 |       1
+(1 row)
+
+select reason_code, amount_minor, balance_before_minor, balance_after_minor, requested_by_name, approved_by_name from balance_adjustments
+ reason_code  | amount_minor | balance_before_minor | balance_after_minor | requested_by_name | approved_by_name 
+--------------+--------------+----------------------+---------------------+-------------------+------------------
+ fee_reversal |         3500 |               120490 |              123990 | Sam Operator      | Jordan Approver
+(1 row)
+
+select kind, status, count(*) from kit_approval_requests group by 1,2
+        kind        |  status  | count 
+--------------------+----------+-------
+ balance_adjustment | approved |     1
+(1 row)
+
+select action, actor_name, target_type from kit_audit_log order by occurred_at
+        action        |   actor_name    |   target_type    
+----------------------+-----------------+------------------
+ Submitted            | Sam Operator    | approval_request
+ Adjustment requested | Sam Operator    | customer_account
+ Balance adjusted     | Jordan Approver | customer_account
+ Approved             | Jordan Approver | approval_request
+(4 rows)
+

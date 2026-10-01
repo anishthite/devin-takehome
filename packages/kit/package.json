@@ -14,6 +14,8 @@
     "jose": "6.2.12",
     "lucide-react": "1.47.0",
     "next-auth": "5.0.0-beta.32",
+    "pg": "8.16.3",
+    "pg-mem": "3.0.5",
     "radix-ui": "1.6.7",
     "recharts": "3.8.0",
     "sonner": "2.0.8",
@@ -26,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "8.15.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

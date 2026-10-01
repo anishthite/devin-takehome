@@ -17,6 +17,10 @@ import { createApprovalService, type ApprovalService } from "@kit/services/appro
 import type { AuditLog } from "@kit/services/audit-log";
 import type { AuditReader } from "@kit/services/audit-reader";
 import { cachePerSession, claimsRoleProvider, type RoleProvider } from "@kit/services/role-provider";
+import { sqlApprovalStore } from "@kit/sql/approval-store";
+import { sqlAuditLog } from "@kit/sql/audit-log";
+import type { SqlClient } from "@kit/sql/client";
+import { getSqlClient } from "@kit/sql/connection";
 
 /**
  * `off`: Entra app-role claims, no Dataverse (default).
@@ -34,6 +38,8 @@ export interface KitServices {
   approvals: ApprovalService;
   /** Null when Dataverse is off. */
   flowApprovals: PowerAutomateApprovalReader | null;
+  /** DATABASE_URL connection backing audit_log and approvals; null means they are in memory. */
+  sql: SqlClient | null;
 }
 
 const MOCK_MIRROR_PREFIX = "cr7f3_";
@@ -68,8 +74,10 @@ async function seedDemoApprovals(approvals: ApprovalService) {
 
 async function build(): Promise<KitServices> {
   const demo = isDemoMode();
-  const auditLog = memoryAuditLog();
-  const store = memoryApprovalStore();
+  const sql = getSqlClient();
+  const auditLog = sql ? sqlAuditLog(sql) : memoryAuditLog();
+  const store = sql ? sqlApprovalStore(sql) : memoryApprovalStore();
+  const transaction = sql ? sql.transaction : undefined;
 
   let services: KitServices;
   if (!isDataverseEnabled()) {
@@ -78,8 +86,9 @@ async function build(): Promise<KitServices> {
       roles: claimsRoleProvider,
       auditLog,
       auditReader: null,
-      approvals: createApprovalService({ store, auditLog, mirror: null }),
+      approvals: createApprovalService({ store, auditLog, mirror: null, transaction }),
       flowApprovals: null,
+      sql,
     };
   } else {
     const { client, mirrorPrefix } = connect(demo);
@@ -93,12 +102,14 @@ async function build(): Promise<KitServices> {
         store,
         auditLog,
         mirror: mirrorPrefix ? approvalStatusMirror(client, mirrorPrefix) : null,
+        transaction,
       }),
       flowApprovals: flowApprovalReader(client),
+      sql,
     };
   }
 
-  if (demo) await seedDemoApprovals(services.approvals);
+  if (demo && !sql) await seedDemoApprovals(services.approvals);
   return services;
 }
 

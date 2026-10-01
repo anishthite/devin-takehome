@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { approvalTarget } from "@kit/services/approvals";
+import { approvalTarget, PAYMENT_KIND } from "@kit/services/approvals";
 import { fromAuditLog, mergeAuditTrail, type AuditSource, type AuditViewerEntry } from "@kit/services/audit-reader";
 import { requireRole } from "@kit/services/authz";
 import { getKitServices } from "@kit/services/services";
@@ -24,7 +24,7 @@ export default async function AuditPage({ searchParams }: PageProps<"/audit">) {
   await requireRole("Ledger.Approver");
   const { request: requestId } = await searchParams;
   const services = await getKitServices();
-  const requests = await services.approvals.list();
+  const requests = await services.approvals.list({ kind: PAYMENT_KIND });
   const selected = requests.find((r) => r.id === requestId) ?? null;
 
   let entries: AuditViewerEntry[];

@@ -18,7 +18,7 @@ function LogoMark({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
-function Logo({ className, ...props }: React.ComponentProps<"div">) {
+function Logo({ className, name = "Ledger", ...props }: React.ComponentProps<"div"> & { name?: string }) {
   return (
     <div
       data-slot="logo"
@@ -26,7 +26,7 @@ function Logo({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     >
       <LogoMark />
-      <span>Ledger</span>
+      <span>{name}</span>
     </div>
   )
 }

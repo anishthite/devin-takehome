@@ -11,8 +11,15 @@ import type { AuditChange, AuditLog, AuditTarget } from "./audit-log.ts";
 export type ApprovalStatus = "pending" | "approved" | "rejected" | "cancelled";
 export type ApprovalDecision = "approved" | "rejected";
 
+/** App-specific fields carried with a request (e.g. the account an adjustment applies to). */
+export type ApprovalDetails = Record<string, string | number | boolean | null>;
+
+/** Payments are the default kind; other apps register their own (e.g. `balance_adjustment`). */
+export const PAYMENT_KIND = "payment";
+
 export interface ApprovalRequest {
   id: string;
+  kind: string;
   title: string;
   counterparty: string;
   amountMinor: number;
@@ -29,16 +36,23 @@ export interface ApprovalRequest {
   mirror: { entitySet: string; id: Guid } | null;
   /** Last mirror failure; the kit record stays authoritative either way. */
   mirrorError: string | null;
+  details: ApprovalDetails;
 }
 
 export interface NewApprovalRequest {
   title: string;
   counterparty: string;
   amountMinor: number;
+  kind?: string;
+  details?: ApprovalDetails;
+}
+
+export interface ApprovalFilter {
+  kind?: string;
 }
 
 export interface ApprovalStore {
-  list(): Promise<ApprovalRequest[]>;
+  list(filter?: ApprovalFilter): Promise<ApprovalRequest[]>;
   get(id: string): Promise<ApprovalRequest | null>;
   save(request: ApprovalRequest): Promise<void>;
 }
@@ -57,18 +71,38 @@ export class ApprovalError extends Error {
   }
 }
 
+export interface DecideOptions {
+  /** Kind the caller knows how to decide; defaults to payments. Other kinds are refused. */
+  kind?: string;
+  /**
+   * Runs on approval, inside the same transaction and before the request is saved as approved,
+   * e.g. to post the money movement. If it throws, the request stays pending.
+   */
+  onApproved?: (request: ApprovalRequest, actor: Actor) => Promise<void>;
+}
+
 export interface ApprovalService {
-  list(): Promise<ApprovalRequest[]>;
+  list(filter?: ApprovalFilter): Promise<ApprovalRequest[]>;
   get(id: string): Promise<ApprovalRequest | null>;
   submit(actor: Actor, input: NewApprovalRequest): Promise<ApprovalRequest>;
-  decide(actor: Actor, id: string, decision: ApprovalDecision, comment?: string): Promise<ApprovalRequest>;
+  decide(
+    actor: Actor,
+    id: string,
+    decision: ApprovalDecision,
+    comment?: string,
+    options?: DecideOptions,
+  ): Promise<ApprovalRequest>;
   cancel(actor: Actor, id: string): Promise<ApprovalRequest>;
 }
+
+export type Transaction = <T>(fn: () => Promise<T>) => Promise<T>;
 
 export interface ApprovalServiceDeps {
   store: ApprovalStore;
   auditLog: AuditLog;
   mirror: ApprovalStatusMirror | null;
+  /** Wraps each state change (effect + save + audit) so they commit together; SQL-backed stores pass `sql.transaction`. */
+  transaction?: Transaction;
   now?: () => Date;
   newId?: () => string;
 }
@@ -83,6 +117,7 @@ export function createApprovalService({
   store,
   auditLog,
   mirror,
+  transaction = (fn) => fn(),
   now = () => new Date(),
   newId = () => crypto.randomUUID(),
 }: ApprovalServiceDeps): ApprovalService {
@@ -92,9 +127,18 @@ export function createApprovalService({
     return request;
   }
 
-  async function record(actor: Actor, action: string, request: ApprovalRequest, changes: AuditChange[]) {
-    await store.save(request);
-    await auditLog.append({ actorId: actor.id, actorName: actor.name, action, target: approvalTarget(request.id), changes });
+  async function record(
+    actor: Actor,
+    action: string,
+    request: ApprovalRequest,
+    changes: AuditChange[],
+    effect?: () => Promise<void>,
+  ) {
+    await transaction(async () => {
+      if (effect) await effect();
+      await store.save(request);
+      await auditLog.append({ actorId: actor.id, actorName: actor.name, action, target: approvalTarget(request.id), changes });
+    });
     if (!mirror) return request;
     try {
       const id = await mirror.publish(request, actor);
@@ -114,8 +158,8 @@ export function createApprovalService({
   });
 
   return {
-    async list() {
-      return (await store.list()).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+    async list(filter) {
+      return (await store.list(filter)).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
     },
 
     get: (id) => store.get(id),
@@ -129,8 +173,10 @@ export function createApprovalService({
         throw new ApprovalError("Amount must be a positive number of cents");
       }
 
+      const kind = input.kind ?? PAYMENT_KIND;
       const request: ApprovalRequest = {
         id: newId(),
+        kind,
         title,
         counterparty,
         amountMinor: input.amountMinor,
@@ -145,6 +191,7 @@ export function createApprovalService({
         comment: null,
         mirror: null,
         mirrorError: null,
+        details: { ...input.details },
       };
       return record(actor, "Submitted", request, [
         { attribute: "title", oldValue: null, newValue: title },
@@ -154,9 +201,12 @@ export function createApprovalService({
       ]);
     },
 
-    async decide(actor, id, decision, comment) {
+    async decide(actor, id, decision, comment, options = {}) {
       if (!hasRole(actor.roles, "Ledger.Approver")) throw new ApprovalError("Only approvers can decide approval requests");
       const request = await load(id);
+      if (request.kind !== (options.kind ?? PAYMENT_KIND)) {
+        throw new ApprovalError("This request has to be decided in the app that owns it");
+      }
       if (request.status !== "pending") throw new ApprovalError(`Request is already ${request.status}`);
       if (request.requestedById === actor.id) throw new ApprovalError("You can't decide a request you submitted");
 
@@ -170,7 +220,14 @@ export function createApprovalService({
       });
       const changes = [statusChange("pending", decision)];
       if (note) changes.push({ attribute: "comment", oldValue: null, newValue: note });
-      return record(actor, decision === "approved" ? "Approved" : "Rejected", request, changes);
+      const onApproved = decision === "approved" ? options.onApproved : undefined;
+      return record(
+        actor,
+        decision === "approved" ? "Approved" : "Rejected",
+        request,
+        changes,
+        onApproved && (() => onApproved(structuredClone(request), actor)),
+      );
     },
 
     async cancel(actor, id) {

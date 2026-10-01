@@ -10,6 +10,7 @@ npm workspaces monorepo:
 |---|---|
 | [`packages/kit/`](packages/kit/README.md) | The app kit (`@kit/*`): auth, roles, kit services, Dataverse adapters, demo mode, UI library. Shared by every app. |
 | `apps/ledger/` | The Ledger app: pages, ledger domain logic, its Next.js config and `.env`. |
+| [`apps/adjustments/`](apps/adjustments/README.md) | Customer balance adjustments: maker-checker over an external Postgres database via the kit SQL connector (port 3001). |
 
 Run everything from the repo root; the root scripts delegate to the workspaces. New apps go in `apps/<name>/` and are wired to the kit as described in the kit README.
 
@@ -80,5 +81,9 @@ Dataverse setup for `live` mode:
 3. Create the mirror table with text columns `<prefix>name`, `<prefix>kitrequestid`, `<prefix>counterparty`, `<prefix>status`, `<prefix>comment` and a decimal `<prefix>amount`.
 4. Give users Dataverse security roles named `Ledger Viewer` / `Ledger Operator` / `Ledger Approver` / `Ledger Admin` (directly or via teams), or map your own with `DATAVERSE_ROLE_TEMPLATE_IDS` / `DATAVERSE_ROLE_NAMES`.
 
-With Dataverse enabled, sign-in no longer requires an Entra app role; users without a mapped Dataverse role get a 403. The kit `audit_log` and approval store are in memory until the kit has a database.
+With Dataverse enabled, sign-in no longer requires an Entra app role; users without a mapped Dataverse role get a 403.
+
+## SQL database (optional)
+
+Set `DATABASE_URL` (PostgreSQL) to store the kit `audit_log` and approval requests in SQL instead of memory, via `packages/kit/sql/`. Apply the schema with `npm run db:migrate`. See [`apps/adjustments/README.md`](apps/adjustments/README.md).
 
