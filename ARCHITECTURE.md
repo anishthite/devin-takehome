@@ -1,14 +1,16 @@
 # Architecture
 
 This repo holds internal business apps that share one foundation, the **app
-kit**. Today there is one app, **Ledger**: a payment ledger with
-maker-checker approvals. Users sign in with their company's Microsoft Entra
+kit**. There are two apps: **Ledger**, a payment ledger with maker-checker
+approvals, and **Refunds**, which handles customer refund requests,
+approvals and issuing. Users sign in with their company's Microsoft Entra
 ID account, and what they can do depends on their role. Apps can optionally
 connect to Microsoft Dataverse for roles, auditing and approvals.
 
 ```
 apps/
   ledger/         The Ledger app: pages and ledger-specific logic
+  refunds/        The Refunds app: pages and refund-specific logic
 packages/
   kit/            Shared foundation: auth, roles, services, Dataverse, demo mode, UI
 ```
@@ -17,8 +19,8 @@ packages/
 flowchart TB
     user(["Browser"])
 
-    subgraph app["apps/ledger"]
-        ledger["<b>Ledger app</b><br/>proxy · pages · ledger logic + sample data"]
+    subgraph app["apps/*"]
+        ledger["<b>Ledger app</b> · <b>Refunds app</b><br/>proxy · pages · domain logic + sample data"]
     end
 
     subgraph kit["packages/kit (@kit/*)"]
@@ -65,21 +67,24 @@ adapters only run with `DATAVERSE_ENABLED=true`, and with `DEMO_MODE=true` the
 dashed mocks take the place of Microsoft's services.
 
 The [README](README.md) covers setup, and each workspace has its own README:
-[Ledger](apps/ledger/README.md), [kit](packages/kit/README.md).
+[Ledger](apps/ledger/README.md), [Refunds](apps/refunds/README.md),
+[kit](packages/kit/README.md). To add an app, follow the
+[`new-kit-app`](.agents/skills/new-kit-app/SKILL.md) skill.
 
 ## Apps vs. the kit
 
 The kit holds everything that isn't specific to one app; each app only adds
 its own pages and domain logic.
 
-| | Kit (`packages/kit`) | App (`apps/ledger`) |
+| | Kit (`packages/kit`) | App (`apps/<name>`) |
 |---|---|---|
 | Sign-in | Auth.js + Entra config, sign-in and 403 pages | Small files that point Next.js at the kit |
 | Roles and access | Role hierarchy, `requireRole()` | Decides which pages need which role |
 | Business services | Approvals, audit log, Dataverse adapters | Uses them in its pages |
 | UI | Design system and the app shell (sidebar, header, user menu) | Its own navigation and pages |
 | Demo mode | Mock Entra, mock Dataverse, demo users | Nothing extra |
-| Domain logic | None | Ledger types, summary math, sample data |
+| Branding | Logo and sign-in copy read from `KIT_APP_*` | Sets its name and tagline in `next.config.ts` |
+| Domain logic | None | Its own types, services, summary math, sample data |
 
 Apps import the kit as `@kit/*`, and Next.js compiles it from source, so
 there is no separate build step for the kit. Next.js only finds routes and
@@ -144,14 +149,16 @@ all run the same code in every mode.
 
 ## Data and storage
 
-There is no database or ledger backend yet. In every mode, the dashboard
-shows generated sample payments, and the approval store and audit log are
+There is no database or domain backend yet. In every mode, the dashboards
+show generated sample data (payments in Ledger, refund history in Refunds),
+Refunds keeps the refunds you create in memory, and the approval store and audit log are
 kept in memory, so they reset on restart. See [DEPLOYMENT.md](DEPLOYMENT.md#in-memory-state)
 for what that means for hosting.
 
 ## Quality checks
 
 `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` run
-across both workspaces in CI. Kit tests cover auth, roles, the services, the
+across every workspace in CI. Kit tests cover auth, roles, the services, the
 Dataverse adapters (against the mock organization) and the full demo sign-in
-flow. Ledger tests cover the ledger math.
+flow. Ledger tests cover the ledger math. Refunds tests cover the refund
+lifecycle, RBAC, maker-checker, audit entries, summaries and CSV escaping.
