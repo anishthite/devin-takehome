@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { APP_HEADLINE, APP_NAME, APP_TAGLINE } from "@kit/app";
 import { auth, signIn } from "@kit/auth";
 import { MicrosoftMark } from "@kit/components/microsoft-mark";
 import { isDemoMode } from "@kit/demo/mode";
@@ -10,7 +11,7 @@ import { Logo } from "@kit/ui/logo";
 
 const ERRORS: Record<string, string> = {
   AccessDenied:
-    "Your account isn't allowed to use this app. Ask an admin to assign you a Ledger role in Microsoft Entra.",
+    `Your account isn't allowed to use this app. Ask an admin to assign you a ${APP_NAME} role in Microsoft Entra.`,
   Configuration: "Sign-in is misconfigured on the server. Check the Entra app registration settings.",
 };
 
@@ -43,14 +44,14 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <Logo className="text-lg" />
         <div className="max-w-md space-y-4">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            Every payment, accounted for.
+            {APP_HEADLINE}
           </h1>
           <p className="text-muted-foreground">
-            Track inflows, outflows and approvals across your organization
+            {APP_TAGLINE}
             {demo ? " — shown here with sample data." : " — secured by your company’s Microsoft Entra ID."}
           </p>
         </div>
-        <p className="text-sm text-muted-foreground/80">© {new Date().getFullYear()} Ledger</p>
+        <p className="text-sm text-muted-foreground/80">© {new Date().getFullYear()} {APP_NAME}</p>
       </section>
 
       <section className="flex items-center justify-center p-6">
@@ -95,7 +96,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           {!demo && (
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="mt-px size-4 shrink-0 text-brand-strong" />
-              Only members of your organization&apos;s Entra tenant with an assigned Ledger role can sign in.
+              Only members of your organization&apos;s Entra tenant with an assigned {APP_NAME} role can sign in.
             </p>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { APP_NAME } from "@kit/app";
 import { ChevronRight, FlaskConical } from "lucide-react";
 import { Avatar } from "@kit/components/avatar";
 import { MicrosoftMark } from "@kit/components/microsoft-mark";
@@ -27,7 +28,7 @@ export default async function DemoIdpLoginPage({ searchParams }: { searchParams:
             </div>
             <div className="space-y-1">
               <CardTitle className="text-xl">Pick an account</CardTitle>
-              <CardDescription>to continue to Ledger</CardDescription>
+              <CardDescription>to continue to {APP_NAME}</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="px-6">

@@ -10,6 +10,7 @@ npm workspaces monorepo:
 |---|---|
 | [`packages/kit/`](packages/kit/README.md) | The app kit (`@kit/*`): auth, roles, kit services, Dataverse adapters, demo mode, UI library. Shared by every app. |
 | `apps/ledger/` | The Ledger app: pages, ledger domain logic, its Next.js config and `.env`. |
+| [`apps/refunds/`](apps/refunds/README.md) | Refunds dashboard on port 3001: request → maker-checker approval → payout, with RBAC and an audit log. |
 
 Run everything from the repo root; the root scripts delegate to the workspaces. New apps go in `apps/<name>/` and are wired to the kit as described in the kit README.
 
