@@ -10,7 +10,6 @@ of fintech-specific components built on top of them.
   Tailwind v4 with `@theme inline`.
 - Add new shadcn components with `npx shadcn@latest add <name>`;
   `components.json` points the `ui` alias at `@/ui-components`.
-- Every component is visible at `/ui-kit` (sign in, or run `npm run dev:demo`).
 
 ## Principles
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ArrowLeftRight, CheckCircle2, LayoutDashboard, Palette, Settings } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, LayoutDashboard, Settings } from "lucide-react";
 import { auth } from "@/auth";
 import { NavLink } from "@/components/nav-link";
 import { DemoBanner } from "@/demo/banner";
@@ -7,7 +7,6 @@ import { isDemoMode } from "@/demo/mode";
 import { UserMenu } from "@/components/user-menu";
 import { Badge } from "@/ui-components/badge";
 import { Logo } from "@/ui-components/logo";
-import { Separator } from "@/ui-components/separator";
 
 const SOON = [
   { label: "Ledger", icon: ArrowLeftRight },
@@ -42,13 +41,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </span>
           ))}
         </nav>
-        <div className="mt-auto space-y-3">
-          <Separator />
-          <NavLink href="/ui-kit">
-            <Palette />
-            UI kit
-          </NavLink>
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
