@@ -1,4 +1,4 @@
-import { token, demoOnly } from "@/demo/idp/handlers";
+import { token, demoOnly } from "@kit/demo/idp/handlers";
 
 export const dynamic = "force-dynamic";
 

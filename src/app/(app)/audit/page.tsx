@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { approvalTarget } from "@/lib/kit/approvals";
-import { fromAuditLog, mergeAuditTrail, type AuditSource, type AuditViewerEntry } from "@/lib/kit/audit-reader";
-import { requireRole } from "@/lib/kit/authz";
-import { getKitServices } from "@/lib/kit/services";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/ui-components/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui-components/card";
-import { PageHeader } from "@/ui-components/page-header";
+import { approvalTarget } from "@kit/services/approvals";
+import { fromAuditLog, mergeAuditTrail, type AuditSource, type AuditViewerEntry } from "@kit/services/audit-reader";
+import { requireRole } from "@kit/services/authz";
+import { getKitServices } from "@kit/services/services";
+import { cn } from "@kit/lib/utils";
+import { Badge } from "@kit/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@kit/ui/card";
+import { PageHeader } from "@kit/ui/page-header";
 
 const time = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "medium", timeZone: "UTC" });
 

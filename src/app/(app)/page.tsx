@@ -1,19 +1,19 @@
 import { ArrowDownLeft, ArrowUpRight, Clock, ShieldCheck, Wallet } from "lucide-react";
-import { auth } from "@/auth";
-import { currentActor } from "@/lib/kit/authz";
-import { getKitServices } from "@/lib/kit/services";
+import { auth } from "@kit/auth";
+import { currentActor } from "@kit/services/authz";
+import { getKitServices } from "@kit/services/services";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/ledger/format";
-import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/demo/ledger";
+import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/lib/ledger/sample-data";
 import { summarize } from "@/lib/ledger/summary";
-import { ROLE_LABELS } from "@/lib/roles";
-import { Amount } from "@/ui-components/amount";
-import { Badge } from "@/ui-components/badge";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/ui-components/card";
-import { DescriptionItem, DescriptionList } from "@/ui-components/description-list";
-import { FlowChart, FlowLegend } from "@/ui-components/flow-chart";
-import { PageHeader } from "@/ui-components/page-header";
-import { StatCard } from "@/ui-components/stat-card";
-import { StatusBadge } from "@/ui-components/status-badge";
+import { ROLE_LABELS } from "@kit/auth/roles";
+import { Amount } from "@kit/ui/amount";
+import { Badge } from "@kit/ui/badge";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@kit/ui/card";
+import { DescriptionItem, DescriptionList } from "@kit/ui/description-list";
+import { FlowChart, FlowLegend } from "@kit/ui/flow-chart";
+import { PageHeader } from "@kit/ui/page-header";
+import { StatCard } from "@kit/ui/stat-card";
+import { StatusBadge } from "@kit/ui/status-badge";
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/ui-components/table";
+} from "@kit/ui/table";
 
 export default async function DashboardPage() {
   const session = await auth();

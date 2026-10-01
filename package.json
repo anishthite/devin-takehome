@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test \"tests/**/*.test.ts\""
+    "test": "node --test \"tests/**/*.test.ts\" \"kit/tests/**/*.test.ts\""
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/kit/authz";
-import { ApprovalError } from "@/lib/kit/approvals";
-import { getKitServices } from "@/lib/kit/services";
+import { requireRole } from "@kit/services/authz";
+import { ApprovalError } from "@kit/services/approvals";
+import { getKitServices } from "@kit/services/services";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 

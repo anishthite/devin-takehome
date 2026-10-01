@@ -1,4 +1,4 @@
-import { discovery, demoOnly } from "@/demo/idp/handlers";
+import { discovery, demoOnly } from "@kit/demo/idp/handlers";
 
 export const dynamic = "force-dynamic";
 

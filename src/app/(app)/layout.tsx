@@ -1,14 +1,9 @@
-import { forbidden, redirect } from "next/navigation";
 import { ArrowLeftRight, CheckCircle2, History, LayoutDashboard, Settings } from "lucide-react";
-import { auth } from "@/auth";
-import { NavLink } from "@/components/nav-link";
-import { DemoBanner } from "@/demo/banner";
-import { isDemoMode } from "@/demo/mode";
-import { UserMenu } from "@/components/user-menu";
-import { currentActor } from "@/lib/kit/authz";
-import { hasRole } from "@/lib/roles";
-import { Badge } from "@/ui-components/badge";
-import { Logo } from "@/ui-components/logo";
+import { hasRole } from "@kit/auth/roles";
+import { AppShell } from "@kit/components/app-shell";
+import { NavLink } from "@kit/components/nav-link";
+import { currentActor } from "@kit/services/authz";
+import { Badge } from "@kit/ui/badge";
 
 const SOON = [
   { label: "Ledger", icon: ArrowLeftRight },
@@ -16,16 +11,12 @@ const SOON = [
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const session = await auth();
-  if (!session?.user) redirect("/signin");
   const actor = await currentActor();
-  if (actor.roles.length === 0) forbidden();
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 md:flex">
-        <Logo className="px-2" />
-        <nav className="mt-8 space-y-1">
+    <AppShell
+      nav={
+        <>
           <NavLink href="/">
             <LayoutDashboard />
             Dashboard
@@ -53,18 +44,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </Badge>
             </span>
           ))}
-        </nav>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {isDemoMode() && <DemoBanner />}
-        <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-          <Logo className="md:hidden" />
-          <div className="hidden md:block" />
-          <UserMenu user={{ ...session.user, roles: actor.roles }} />
-        </header>
-        <main className="flex-1 p-6 lg:p-8">{children}</main>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

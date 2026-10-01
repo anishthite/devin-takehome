@@ -33,9 +33,11 @@ npm run dev                  # http://localhost:3000
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
-UI is built from the shadcn-based component library in `src/ui-components/` (design notes in `src/ui-components/DESIGN.md`). Import from `@/ui-components/<name>`; add more primitives with `npx shadcn@latest add <name>`.
+Everything reusable lives in the app kit, [`kit/`](kit/README.md) (imported as `@kit/*`): auth, roles, kit services, Dataverse adapters, demo mode and the UI library. `src/` holds only the Ledger app itself.
 
-The dashboard currently renders deterministic sample data (`src/demo/ledger.ts`) until the real ledger backend is connected.
+UI is built from the shadcn-based component library in `kit/ui/` (design notes in `kit/ui/DESIGN.md`). Import from `@kit/ui/<name>`; add more primitives with `npx shadcn@latest add <name>`.
+
+The dashboard currently renders deterministic sample data (`src/lib/ledger/sample-data.ts`) until the real ledger backend is connected.
 
 ## Demo mode (no Entra)
 
@@ -44,7 +46,7 @@ npm install
 npm run dev:demo             # DEMO_MODE=true, no env vars needed
 ```
 
-Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra provider is swapped for a standard Auth.js OIDC provider pointed at a mock Entra IdP served by the app itself under `/demo-idp` (discovery, `authorize`, `token`, `userinfo`, `jwks`). Sign-in is a real authorization-code + PKCE (S256) flow with `state` and `nonce`; the IdP issues RS256 ID tokens with Entra-shaped claims (`oid`, `tid`, `roles`, `preferred_username`, `ver: "2.0"`) for one of four personas (one per Ledger role), so the same tenant, role, proxy and session checks run as in production. Picking a persona on `/signin` sends it as `login_hint`; without one the IdP shows its own account picker. The `/demo-idp` routes 404 when demo mode is off, demo sessions carry the demo tenant ID and are rejected outside demo mode, and demo mode falls back to a fixed `AUTH_SECRET` only if none is set — never enable it in production.
+Everything demo-specific lives in `kit/demo/`. With `DEMO_MODE=true` the Entra provider is swapped for a standard Auth.js OIDC provider pointed at a mock Entra IdP served by the app itself under `/demo-idp` (discovery, `authorize`, `token`, `userinfo`, `jwks`). Sign-in is a real authorization-code + PKCE (S256) flow with `state` and `nonce`; the IdP issues RS256 ID tokens with Entra-shaped claims (`oid`, `tid`, `roles`, `preferred_username`, `ver: "2.0"`) for one of four personas (one per Ledger role), so the same tenant, role, proxy and session checks run as in production. Picking a persona on `/signin` sends it as `login_hint`; without one the IdP shows its own account picker. The `/demo-idp` routes 404 when demo mode is off, demo sessions carry the demo tenant ID and are rejected outside demo mode, and demo mode falls back to a fixed `AUTH_SECRET` only if none is set — never enable it in production.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -53,7 +55,7 @@ Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra p
 
 ## Dataverse (optional)
 
-Off by default; set `DATAVERSE_ENABLED=true` to switch the kit services in `src/lib/kit/services.ts` to the Dataverse adapters in `src/lib/dataverse/`. With `DEMO_MODE=true` as well (`npm run dev:demo:dataverse`) they run against an in-memory mock org (`src/demo/dataverse/`) that answers the same Web API calls with Microsoft-shaped payloads, so no Entra or Dataverse credentials are needed.
+Off by default; set `DATAVERSE_ENABLED=true` to switch the kit services in `kit/services/services.ts` to the Dataverse adapters in `kit/dataverse/`. With `DEMO_MODE=true` as well (`npm run dev:demo:dataverse`) they run against an in-memory mock org (`kit/demo/dataverse/`) that answers the same Web API calls with Microsoft-shaped payloads, so no Entra or Dataverse credentials are needed.
 
 | Kit interface | Default | Dataverse adapter |
 |---|---|---|
