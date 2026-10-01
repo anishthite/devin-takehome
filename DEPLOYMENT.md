@@ -16,7 +16,10 @@ flowchart LR
     repo -- "npm run build -w apps/ledger" --> ledger["ledger.example.com<br/>Ledger app (kit included)"]
     repo -- "npm run build -w apps/refunds" --> other["refunds.example.com<br/>Refunds app (kit included)"]
     ledger --> entra["Microsoft Entra ID"]
+    repo -- "npm run build -w apps/adjustments" --> adj["adjustments.example.com<br/>Adjustments app (kit included)"]
     other --> entra
+    adj --> entra
+    adj --> pg[("PostgreSQL")]
     ledger -. optional .-> dv[("Dataverse")]
     other -. optional .-> dv
 ```
@@ -58,11 +61,15 @@ Every app has its own:
 | `AUTH_SECRET` | A unique random value per app (`openssl rand -base64 32`) |
 | `AUTH_TRUST_HOST` | `true`, unless on Vercel or `AUTH_URL` is set (Auth.js trusts the host automatically then) |
 | `DEMO_MODE` | Unset. Never `true` in production |
+| `DATABASE_URL` (+ `DATABASE_SSL`, `DATABASE_POOL_MAX`, `DATABASE_STATEMENT_TIMEOUT_MS`) | Required for Adjustments; optional for other apps (kit approvals and audit log in SQL). Run `npm run db:migrate` before deploying. See the [Adjustments README](apps/adjustments/README.md) |
 | `DATAVERSE_*` | Only if the app uses Dataverse (see the [kit README](packages/kit/README.md#dataverse-optional)) |
 
 ## In-memory state
 
-This is the main blocker for real hosting.
+This is the main blocker for real hosting, for apps that run without
+`DATABASE_URL`. With `DATABASE_URL` set (always the case for Adjustments
+outside demo mode), approvals and the audit log are in PostgreSQL, so restarts
+keep them and several instances can share them.
 
 The kit's approval store and audit log live in each server process's memory
 (`packages/kit/services/services.ts`), and that store is the source of truth.

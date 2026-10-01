@@ -1,9 +1,10 @@
 # Architecture
 
 This repo holds internal business apps that share one foundation, the **app
-kit**. There are two apps: **Ledger**, a payment ledger with maker-checker
-approvals, and **Refunds**, which handles customer refund requests,
-approvals and issuing. Users sign in with their company's Microsoft Entra
+kit**. There are three apps: **Ledger**, a payment ledger with maker-checker
+approvals, **Refunds**, which handles customer refund requests,
+approvals and issuing, and **Adjustments**, which posts customer balance
+adjustments to an external PostgreSQL database after maker-checker approval. Users sign in with their company's Microsoft Entra
 ID account, and what they can do depends on their role. Apps can optionally
 connect to Microsoft Dataverse for roles, auditing and approvals.
 
@@ -11,6 +12,7 @@ connect to Microsoft Dataverse for roles, auditing and approvals.
 apps/
   ledger/         The Ledger app: pages and ledger-specific logic
   refunds/        The Refunds app: pages and refund-specific logic
+  adjustments/    The Adjustments app: pages, adjustment logic, Postgres schema
 packages/
   kit/            Shared foundation: auth, roles, services, Dataverse, demo mode, UI
 ```
@@ -20,7 +22,7 @@ flowchart TB
     user(["Browser"])
 
     subgraph app["apps/*"]
-        ledger["<b>Ledger app</b> · <b>Refunds app</b><br/>proxy · pages · domain logic + sample data"]
+        ledger["<b>Ledger app</b> · <b>Refunds app</b> · <b>Adjustments app</b><br/>proxy · pages · domain logic + sample data"]
     end
 
     subgraph kit["packages/kit (@kit/*)"]
@@ -68,6 +70,7 @@ dashed mocks take the place of Microsoft's services.
 
 The [README](README.md) covers setup, and each workspace has its own README:
 [Ledger](apps/ledger/README.md), [Refunds](apps/refunds/README.md),
+[Adjustments](apps/adjustments/README.md),
 [kit](packages/kit/README.md). To add an app, follow the
 [`new-kit-app`](.agents/skills/new-kit-app/SKILL.md) skill.
 
@@ -149,10 +152,17 @@ all run the same code in every mode.
 
 ## Data and storage
 
-There is no database or domain backend yet. In every mode, the dashboards
+Ledger and Refunds have no database or domain backend yet: their dashboards
 show generated sample data (payments in Ledger, refund history in Refunds),
-Refunds keeps the refunds you create in memory, and the approval store and audit log are
-kept in memory, so they reset on restart. See [DEPLOYMENT.md](DEPLOYMENT.md#in-memory-state)
+and Refunds keeps the refunds you create in memory. Without `DATABASE_URL` the
+approval store and audit log are kept in memory too, so they reset on restart.
+
+Adjustments needs `DATABASE_URL` (PostgreSQL) outside demo mode. Its customer
+accounts and posted adjustments, and the kit approval store and audit log,
+then live in that database through `packages/kit/sql/`. Approving an
+adjustment updates the balance, writes the journal row, marks the approval and
+appends the audit entries in one transaction. In demo mode it uses an
+in-memory Postgres (`pg-mem`) instead. See [DEPLOYMENT.md](DEPLOYMENT.md#in-memory-state)
 for what that means for hosting.
 
 ## Quality checks
@@ -161,4 +171,7 @@ for what that means for hosting.
 across every workspace in CI. Kit tests cover auth, roles, the services, the
 Dataverse adapters (against the mock organization) and the full demo sign-in
 flow. Ledger tests cover the ledger math. Refunds tests cover the refund
-lifecycle, RBAC, maker-checker, audit entries, summaries and CSV escaping.
+lifecycle, RBAC, maker-checker, audit entries, summaries and CSV escaping. Adjustments tests cover
+the adjustment policy, maker-checker, the Admin threshold, overdraft checks
+and idempotent posting; the kit SQL tests run against `pg-mem` and, in CI, a
+real PostgreSQL.

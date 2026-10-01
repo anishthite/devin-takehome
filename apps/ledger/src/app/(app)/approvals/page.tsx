@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Workflow } from "lucide-react";
 import { requireRole } from "@kit/services/authz";
 import { getKitServices } from "@kit/services/services";
-import type { ApprovalStatus } from "@kit/services/approvals";
+import { PAYMENT_KIND, type ApprovalStatus } from "@kit/services/approvals";
 import type { FlowApprovalView } from "@kit/dataverse/flow-approvals";
 import { hasRole } from "@kit/auth/roles";
 import { Alert, AlertDescription } from "@kit/ui/alert";
@@ -29,7 +29,7 @@ export default async function ApprovalsPage({ searchParams }: PageProps<"/approv
   const actor = await requireRole("Ledger.Viewer");
   const { error } = await searchParams;
   const services = await getKitServices();
-  const requests = await services.approvals.list();
+  const requests = await services.approvals.list({ kind: PAYMENT_KIND });
   const canSubmit = hasRole(actor.roles, "Ledger.Operator");
   const canDecide = hasRole(actor.roles, "Ledger.Approver");
 

@@ -10,6 +10,8 @@ export const ADMIN_APPROVAL_THRESHOLD_MINOR = 2_500_00;
 export const MAX_REFUND_MINOR = 50_000_00;
 
 export const REFUND_TARGET_TYPE = "refund";
+/** Kit approval `kind` for refunds, so payment and adjustment queues don't pick them up. */
+export const REFUND_KIND = "refund";
 export const AUDIT_EXPORT_TARGET_TYPE = "refund_audit_export";
 
 export function refundTarget(id: string): AuditTarget {
@@ -111,6 +113,7 @@ export function createRefundService({
       if (open) throw new RefundError(`Order ${orderId} already has an open refund (${open.id})`);
 
       const approval = await approvals.submit(actor, {
+        kind: REFUND_KIND,
         title: `Refund ${orderId}`,
         counterparty: customerName,
         amountMinor: input.amountMinor,
@@ -164,7 +167,7 @@ export function createRefundService({
       if (decision === "approved" && needsAdminApproval(refund) && !hasRole(actor.roles, "Ledger.Admin")) {
         throw new RefundError("Refunds over $2,500.00 need an Admin to approve");
       }
-      const approval = await approvals.decide(actor, approvalIdOf(refund), decision, comment);
+      const approval = await approvals.decide(actor, approvalIdOf(refund), decision, comment, { kind: REFUND_KIND });
       Object.assign(refund, {
         status: decision,
         decidedByName: approval.decidedByName,

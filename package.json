@@ -13,11 +13,14 @@
     "dev:refunds": "npm run dev -w apps/refunds",
     "dev:refunds:demo": "npm run dev:demo -w apps/refunds",
     "dev:refunds:demo:dataverse": "npm run dev:demo:dataverse -w apps/refunds",
-    "build": "npm run build -w apps/ledger && npm run build -w apps/refunds",
+    "dev:adjustments": "npm run dev -w apps/adjustments",
+    "dev:adjustments:demo": "npm run dev:demo -w apps/adjustments",
+    "build": "npm run build -w apps/ledger && npm run build -w apps/refunds && npm run build -w apps/adjustments",
     "start": "npm run start -w apps/ledger",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "test": "npm test --workspaces"
+    "test": "npm test --workspaces",
+    "db:migrate": "npm run db:migrate -w apps/adjustments --"
   },
   "engines": {
     "node": ">=24"
