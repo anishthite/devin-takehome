@@ -65,7 +65,8 @@ npm run dev                                          # http://localhost:3000
 | `npm run db:migrate [-- --seed]` | Apply the Adjustments and kit SQL schema to `DATABASE_URL` |
 | `npm run build` | Production build of every app |
 | `npm start` | Production server for Ledger (`npm run start -w apps/refunds` for Refunds) |
-| `npm run lint` / `npm run typecheck` / `npm test` | Checks across all workspaces (all run in CI) |
+| `npm run lint` / `npm run typecheck` / `npm test` | Checks across all workspaces, plus the app conformance test (all run in CI) |
+| `npm run test:smoke` | Boots every app's production build and checks sign-in and role gates over HTTP (after `npm run build`; runs in CI) |
 
 ## Adding an app
 
@@ -74,6 +75,21 @@ kit needs (proxy, auth route, sign-in page, layout). The full list is in
 [Wiring an app](packages/kit/README.md#wiring-an-app). The
 [`new-kit-app`](.agents/skills/new-kit-app/SKILL.md) skill walks through every
 step, using `apps/refunds` as the template.
+
+Two root test suites pick up every folder in `apps/` automatically, so a new
+app is checked by CI without being registered anywhere:
+
+- `tests/conformance.test.ts` (part of `npm test`) checks the wiring: package
+  scripts, a unique port and `KIT_APP_NAME`, root scripts and docs, the kit
+  files and proxy matcher, `demoOnly()` on every mock IdP route, and a
+  `requireRole()` / `currentActor()` call in every page, route handler and
+  server action.
+- `tests/smoke.test.ts` (`npm run test:smoke`) starts each production build in
+  demo mode (and with the mock Dataverse, or on PostgreSQL when
+  `TEST_DATABASE_URL` is set, if the app has those scripts), signs in as every
+  persona through the mock IdP, and expects 200 or 403 on each static page as
+  its `requireRole()` call says. It then starts the app outside demo mode and
+  checks the mock IdP returns 404 and a demo session is rejected.
 
 ## Skills
 

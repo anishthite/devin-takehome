@@ -175,3 +175,10 @@ lifecycle, RBAC, maker-checker, audit entries, summaries and CSV escaping. Adjus
 the adjustment policy, maker-checker, the Admin threshold, overdraft checks
 and idempotent posting; the kit SQL tests run against `pg-mem` and, in CI, a
 real PostgreSQL.
+
+Two root suites in `tests/` run against every app in `apps/`. The conformance
+test (`npm test`) checks each app's wiring and that every page, route handler
+and server action calls `requireRole()` or `currentActor()`. The smoke test
+(`npm run test:smoke`, after the build) boots each production build, signs in
+as every demo persona over HTTP and checks each page's role gate, then checks
+the mock IdP and demo sessions are locked out outside demo mode.
