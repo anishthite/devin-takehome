@@ -1,3 +1,5 @@
+import { Avatar as AvatarRoot, AvatarFallback } from "@/ui-components/avatar";
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -7,13 +9,12 @@ function initials(name: string): string {
     .join("");
 }
 
-export function Avatar({ name, className = "" }: { name: string; className?: string }) {
+export function Avatar({ name, className }: { name: string; className?: string }) {
   return (
-    <span
-      aria-hidden
-      className={`grid size-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800 ${className}`}
-    >
-      {initials(name)}
-    </span>
+    <AvatarRoot aria-hidden className={className}>
+      <AvatarFallback className="bg-brand-soft text-xs font-semibold text-gain">
+        {initials(name)}
+      </AvatarFallback>
+    </AvatarRoot>
   );
 }

@@ -3,6 +3,8 @@
 import { useTransition } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/avatar";
+import { Badge } from "@/ui-components/badge";
+import { Button } from "@/ui-components/button";
 
 interface Props {
   name: string;
@@ -16,8 +18,9 @@ export function PersonaButton({ name, blurb, roleLabel, start }: Props) {
   const [pending, startTransition] = useTransition();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
@@ -25,19 +28,19 @@ export function PersonaButton({ name, blurb, roleLabel, start }: Props) {
           window.location.assign(await start());
         })
       }
-      className="group flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 disabled:cursor-wait disabled:opacity-70"
+      className="group h-auto w-full justify-start gap-3 bg-card px-4 py-3 text-left whitespace-normal hover:border-brand/40 hover:bg-brand-soft/40 disabled:cursor-wait disabled:opacity-70"
     >
       <Avatar name={name} />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{name}</span>
-        <span className="block truncate text-xs text-zinc-500">{blurb}</span>
+        <span className="block truncate text-xs font-normal text-muted-foreground">{blurb}</span>
       </span>
-      <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">{roleLabel}</span>
+      <Badge variant="secondary">{roleLabel}</Badge>
       {pending ? (
-        <Loader2 className="size-4 animate-spin text-emerald-600" />
+        <Loader2 className="animate-spin text-brand-strong" />
       ) : (
-        <ChevronRight className="size-4 text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-600" />
+        <ChevronRight className="text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:text-brand-strong" />
       )}
-    </button>
+    </Button>
   );
 }

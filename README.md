@@ -33,6 +33,8 @@ npm run dev                  # http://localhost:3000
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
+UI is built from the shadcn-based component library in `src/ui-components/` (design notes in `src/ui-components/DESIGN.md`). Import from `@/ui-components/<name>`; add more primitives with `npx shadcn@latest add <name>`.
+
 The dashboard currently renders deterministic sample data (`src/demo/ledger.ts`) until the real ledger backend is connected.
 
 ## Demo mode (no Entra)
