@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { isDemoMode } from "../src/demo/mode.ts";
-import { DEMO_PERSONAS, findPersona } from "../src/demo/personas.ts";
+import { DEMO_PERSONAS, findPersona, findPersonaByEmail } from "../src/demo/personas.ts";
 import { ROLES } from "../src/lib/roles.ts";
 
 describe("isDemoMode", () => {
@@ -40,5 +40,7 @@ describe("demo personas", () => {
     assert.equal(findPersona("nope"), undefined);
     assert.equal(findPersona(undefined), undefined);
     assert.equal(findPersona({ id: DEMO_PERSONAS[0].id }), undefined);
+    assert.equal(findPersonaByEmail(DEMO_PERSONAS[1].email.toUpperCase()), DEMO_PERSONAS[1]);
+    assert.equal(findPersonaByEmail("nobody@demo.ledger"), undefined);
   });
 });
