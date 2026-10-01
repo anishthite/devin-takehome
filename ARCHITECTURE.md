@@ -145,7 +145,8 @@ all run the same code in every mode.
 
 There is no database or ledger backend yet. In every mode, the dashboard
 shows generated sample payments, and the approval store and audit log are
-kept in memory, so they reset on restart.
+kept in memory, so they reset on restart. See [DEPLOYMENT.md](DEPLOYMENT.md#in-memory-state)
+for what that means for hosting.
 
 ## Quality checks
 
