@@ -1,17 +1,17 @@
-import Credentials from "next-auth/providers/credentials";
-import { findPersona } from "./personas";
+import type { OIDCConfig } from "next-auth/providers";
+import type { Profile } from "next-auth";
+import { DEMO_CLIENT_ID, DEMO_CLIENT_SECRET, DEMO_PROVIDER_ID, demoIssuer } from "./idp/config";
 
-export const DEMO_PROVIDER_ID = "demo";
-
-export function DemoProvider() {
-  return Credentials({
+/** Standard OIDC client pointed at the in-app mock IdP (`/demo-idp`), configured via discovery. */
+export function DemoEntraProvider(): OIDCConfig<Profile> {
+  return {
     id: DEMO_PROVIDER_ID,
-    name: "Demo persona",
-    credentials: { personaId: {} },
-    authorize(credentials) {
-      const persona = findPersona(credentials?.personaId);
-      if (!persona) return null;
-      return { id: persona.id, name: persona.name, email: persona.email };
-    },
-  });
+    name: "Demo Entra ID",
+    type: "oidc",
+    issuer: demoIssuer(),
+    clientId: DEMO_CLIENT_ID,
+    clientSecret: DEMO_CLIENT_SECRET,
+    checks: ["pkce", "state", "nonce"],
+    authorization: { params: { scope: "openid profile email" } },
+  };
 }

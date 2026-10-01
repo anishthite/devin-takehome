@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { auth, signIn } from "@/auth";
 import { Logo, MicrosoftMark } from "@/components/logo";
 import { isDemoMode } from "@/demo/mode";
@@ -8,7 +8,6 @@ import { DemoSignInOptions } from "@/demo/sign-in-options";
 const ERRORS: Record<string, string> = {
   AccessDenied:
     "Your account isn't allowed to use this app. Ask an admin to assign you a Ledger role in Microsoft Entra.",
-  CredentialsSignin: "Unknown demo persona. Pick one of the options below.",
   Configuration: "Sign-in is misconfigured on the server. Check the Entra app registration settings.",
 };
 
@@ -30,6 +29,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
   if (await auth()) redirect(redirectTo);
 
   const errorCode = typeof params.error === "string" ? params.error : undefined;
+  const signedOut = params.signedOut === "1" && !errorCode;
   const error = errorCode ? (ERRORS[errorCode] ?? "Sign-in failed. Please try again.") : undefined;
 
   const demo = isDemoMode();
@@ -41,12 +41,12 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
         <div className="absolute -bottom-40 -left-20 size-[26rem] rounded-full bg-sky-500/10 blur-3xl" />
         <Logo className="relative text-lg" />
         <div className="relative max-w-md space-y-4">
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+          <h1 className="text-balance text-4xl font-semibold leading-tight tracking-tight">
             Every payment, accounted for.
           </h1>
           <p className="text-zinc-400">
-            Track inflows, outflows and approvals across your organization — secured by your
-            company&apos;s Microsoft Entra ID.
+            Track inflows, outflows and approvals across your organization
+            {demo ? " — shown here with sample data." : " — secured by your company’s Microsoft Entra ID."}
           </p>
         </div>
         <p className="relative text-sm text-zinc-500">© {new Date().getFullYear()} Ledger</p>
@@ -61,6 +61,13 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
               {demo ? "Choose a demo persona to explore the app." : "Use your work account to continue."}
             </p>
           </div>
+
+          {signedOut && (
+            <div role="status" className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              <CheckCircle2 className="size-4 shrink-0" />
+              You&apos;ve been signed out.
+            </div>
+          )}
 
           {error && (
             <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

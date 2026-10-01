@@ -1,4 +1,4 @@
-import type { Role } from "@/lib/roles";
+import type { Role } from "../lib/roles.ts";
 
 export interface DemoPersona {
   id: string;
@@ -10,28 +10,28 @@ export interface DemoPersona {
 
 export const DEMO_PERSONAS: readonly DemoPersona[] = [
   {
-    id: "demo-admin-0001",
+    id: "a1d3c0de-0000-4000-8000-000000000001",
     name: "Avery Admin",
     email: "avery@demo.ledger",
     role: "Ledger.Admin",
     blurb: "Full access, settings and audit log",
   },
   {
-    id: "demo-approver-0002",
+    id: "a1d3c0de-0000-4000-8000-000000000002",
     name: "Jordan Approver",
     email: "jordan@demo.ledger",
     role: "Ledger.Approver",
     blurb: "Approves and rejects payments",
   },
   {
-    id: "demo-operator-0003",
+    id: "a1d3c0de-0000-4000-8000-000000000003",
     name: "Sam Operator",
     email: "sam@demo.ledger",
     role: "Ledger.Operator",
     blurb: "Creates draft payments",
   },
   {
-    id: "demo-viewer-0004",
+    id: "a1d3c0de-0000-4000-8000-000000000004",
     name: "Riley Viewer",
     email: "riley@demo.ledger",
     role: "Ledger.Viewer",
@@ -41,4 +41,9 @@ export const DEMO_PERSONAS: readonly DemoPersona[] = [
 
 export function findPersona(id: unknown): DemoPersona | undefined {
   return DEMO_PERSONAS.find((persona) => persona.id === id);
+}
+
+export function findPersonaByEmail(email: unknown): DemoPersona | undefined {
+  if (typeof email !== "string") return undefined;
+  return DEMO_PERSONAS.find((persona) => persona.email === email.toLowerCase());
 }
