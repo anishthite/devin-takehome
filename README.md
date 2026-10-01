@@ -2,6 +2,8 @@
 
 Payment ledger web app with Microsoft Entra ID sign-in (Next.js 16 + Auth.js v5).
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a folder-by-folder breakdown and the request flow.
+
 ## How auth works
 
 - Single-tenant OIDC authorization-code flow against `https://login.microsoftonline.com/<ENTRA_TENANT_ID>/v2.0`, run server-side (BFF). Tokens never reach the browser; the session is an encrypted http-only cookie.
