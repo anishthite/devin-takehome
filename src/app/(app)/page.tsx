@@ -1,5 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight, Clock, ShieldCheck, Wallet } from "lucide-react";
 import { auth } from "@/auth";
+import { currentActor } from "@/lib/kit/authz";
+import { getKitServices } from "@/lib/kit/services";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/ledger/format";
 import { MOCK_OPENING_BALANCE_MINOR, mockLedger } from "@/demo/ledger";
 import { summarize } from "@/lib/ledger/summary";
@@ -24,6 +26,8 @@ import {
 export default async function DashboardPage() {
   const session = await auth();
   const user = session?.user;
+  const actor = await currentActor();
+  const { dataverse } = await getKitServices();
   const now = new Date();
   const entries = mockLedger(now);
   const summary = summarize(entries, MOCK_OPENING_BALANCE_MINOR, now, 14);
@@ -96,9 +100,9 @@ export default async function DashboardPage() {
           <CardContent>
             <DescriptionList>
               <DescriptionItem term="Signed in as">{user?.email ?? user?.name}</DescriptionItem>
-              <DescriptionItem term="Entra roles">
+              <DescriptionItem term={dataverse === "off" ? "Entra app roles" : "Dataverse security roles"}>
                 <span className="mt-1 flex flex-wrap gap-1.5">
-                  {user?.roles.map((role) => (
+                  {actor.roles.map((role) => (
                     <Badge key={role} variant="secondary" className="rounded-md">
                       {ROLE_LABELS[role]}
                     </Badge>

@@ -50,3 +50,24 @@ Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra p
 | --- | --- | --- |
 | `DEMO_IDP_URL` | `http://localhost:$PORT` | Origin the server uses to reach the mock IdP (discovery/token). |
 | `DEMO_PUBLIC_URL` | `DEMO_IDP_URL` | Origin the browser uses for `authorize`, if different (e.g. behind a proxy). |
+
+## Dataverse (optional)
+
+Off by default; set `DATAVERSE_ENABLED=true` to switch the kit services in `src/lib/kit/services.ts` to the Dataverse adapters in `src/lib/dataverse/`. With `DEMO_MODE=true` as well (`npm run dev:demo:dataverse`) they run against an in-memory mock org (`src/demo/dataverse/`) that answers the same Web API calls with Microsoft-shaped payloads, so no Entra or Dataverse credentials are needed.
+
+| Kit interface | Default | Dataverse adapter |
+|---|---|---|
+| `RoleProvider` / `requireRole()` | Entra app-role claims | `RetrieveAadUserRoles(DirectoryObjectId=<oid>)`, mapped by role template id then role name, cached per session |
+| `DataverseClient` | — | Web API v9.2, OAuth client credentials (`<DATAVERSE_URL>/.default`) as an application user; every write sends `CallerObjectId: <oid>` |
+| `AuditReader` | kit `audit_log` only | `RetrieveRecordChangeHistory(Target, PagingInfo)` merged with `audit_log` on `/audit`, labeled by source |
+| Approvals | kit maker-checker (source of truth) | Status mirrored to the app-owned table `<DATAVERSE_MIRROR_PREFIX>ledgerapproval`; `msdyn_flow_approval` / `msdyn_flow_approvalresponse` are read for display only and the client refuses writes to them |
+
+Dataverse setup for `live` mode:
+
+1. Create an application user for the app registration and give it a security role that can read `role`/`audit`/`msdyn_flow_approval*`, write the mirror table, and has the **Act on Behalf of Another User** privilege (needed for `CallerObjectId`).
+2. Turn on auditing for the environment and the mirror table.
+3. Create the mirror table with text columns `<prefix>name`, `<prefix>kitrequestid`, `<prefix>counterparty`, `<prefix>status`, `<prefix>comment` and a decimal `<prefix>amount`.
+4. Give users Dataverse security roles named `Ledger Viewer` / `Ledger Operator` / `Ledger Approver` / `Ledger Admin` (directly or via teams), or map your own with `DATAVERSE_ROLE_TEMPLATE_IDS` / `DATAVERSE_ROLE_NAMES`.
+
+With Dataverse enabled, sign-in no longer requires an Entra app role; users without a mapped Dataverse role get a 403. The kit `audit_log` and approval store are in memory until the kit has a database.
+
