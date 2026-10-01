@@ -1,6 +1,7 @@
 import type { Role } from "@/lib/roles";
 
 export interface DemoPersona {
+  /** Mock Entra object id (`oid`). */
   id: string;
   name: string;
   email: string;
@@ -10,28 +11,28 @@ export interface DemoPersona {
 
 export const DEMO_PERSONAS: readonly DemoPersona[] = [
   {
-    id: "demo-admin-0001",
+    id: "00000000-0000-4000-a000-000000000001",
     name: "Avery Admin",
     email: "avery@demo.ledger",
     role: "Ledger.Admin",
     blurb: "Full access, settings and audit log",
   },
   {
-    id: "demo-approver-0002",
+    id: "00000000-0000-4000-a000-000000000002",
     name: "Jordan Approver",
     email: "jordan@demo.ledger",
     role: "Ledger.Approver",
     blurb: "Approves and rejects payments",
   },
   {
-    id: "demo-operator-0003",
+    id: "00000000-0000-4000-a000-000000000003",
     name: "Sam Operator",
     email: "sam@demo.ledger",
     role: "Ledger.Operator",
     blurb: "Creates draft payments",
   },
   {
-    id: "demo-viewer-0004",
+    id: "00000000-0000-4000-a000-000000000004",
     name: "Riley Viewer",
     email: "riley@demo.ledger",
     role: "Ledger.Viewer",
