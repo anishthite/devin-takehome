@@ -126,7 +126,8 @@ The login is accepted only if the user belongs to the tenant and, unless
 Dataverse is enabled, has at least one role. Only the user's ID, tenant and
 roles go into the encrypted cookie. Tokens never reach the browser.
 
-Roles are hierarchical: `Viewer` < `Operator` < `Approver` < `Admin`.
+Roles are hierarchical: `Ledger.Viewer` < `Ledger.Operator` <
+`Ledger.Approver` < `Ledger.Admin`; holding a role grants every lower one.
 
 ## Run modes
 

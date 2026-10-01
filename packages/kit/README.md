@@ -105,4 +105,6 @@ without a mapped Dataverse role get a 403.
 
 There is no database yet. The approval store and `audit_log`
 (`demo/approvals.ts`, `demo/audit-log.ts`) are in memory in every mode, so
-they reset when the server restarts.
+they reset when the server restarts. See
+[DEPLOYMENT.md](../../DEPLOYMENT.md#in-memory-state) for what that means for
+hosting.
