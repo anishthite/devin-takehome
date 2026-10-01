@@ -9,8 +9,16 @@ const ERRORS: Record<string, string> = {
   Configuration: "Sign-in is misconfigured on the server. Check the Entra app registration settings.",
 };
 
+/** Reduces a callback URL to a same-app path so it can never redirect off-site. */
 function safeRedirect(value: string | string[] | undefined): string {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+  if (typeof value !== "string") return "/";
+  try {
+    const url = new URL(value, "http://localhost");
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    return path.startsWith("//") ? "/" : path;
+  } catch {
+    return "/";
+  }
 }
 
 export default async function SignInPage({ searchParams }: PageProps<"/signin">) {
