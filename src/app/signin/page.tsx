@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { auth, signIn } from "@/auth";
 import { MicrosoftMark } from "@/components/microsoft-mark";
 import { isDemoMode } from "@/demo/mode";
@@ -11,7 +11,6 @@ import { Logo } from "@/ui-components/logo";
 const ERRORS: Record<string, string> = {
   AccessDenied:
     "Your account isn't allowed to use this app. Ask an admin to assign you a Ledger role in Microsoft Entra.",
-  CredentialsSignin: "Unknown demo persona. Pick one of the options below.",
   Configuration: "Sign-in is misconfigured on the server. Check the Entra app registration settings.",
 };
 
@@ -33,6 +32,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
   if (await auth()) redirect(redirectTo);
 
   const errorCode = typeof params.error === "string" ? params.error : undefined;
+  const signedOut = params.signedOut === "1" && !errorCode;
   const error = errorCode ? (ERRORS[errorCode] ?? "Sign-in failed. Please try again.") : undefined;
 
   const demo = isDemoMode();
@@ -46,8 +46,8 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
             Every payment, accounted for.
           </h1>
           <p className="text-muted-foreground">
-            Track inflows, outflows and approvals across your organization — secured by your
-            company&apos;s Microsoft Entra ID.
+            Track inflows, outflows and approvals across your organization
+            {demo ? " — shown here with sample data." : " — secured by your company’s Microsoft Entra ID."}
           </p>
         </div>
         <p className="text-sm text-muted-foreground/80">© {new Date().getFullYear()} Ledger</p>
@@ -62,6 +62,13 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
               {demo ? "Choose a demo persona to explore the app." : "Use your work account to continue."}
             </p>
           </div>
+
+          {signedOut && (
+            <Alert variant="success" role="status">
+              <CheckCircle2 />
+              <AlertDescription>You&apos;ve been signed out.</AlertDescription>
+            </Alert>
+          )}
 
           {error && (
             <Alert variant="danger">

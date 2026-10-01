@@ -5,7 +5,7 @@ export function DemoBanner() {
   return (
     <Banner variant="warning">
       <FlaskConical />
-      Demo mode — mock sign-in and sample data, not connected to Microsoft Entra
+      Demo mode — mock Entra sign-in (OIDC) and sample data, not connected to Microsoft
     </Banner>
   );
 }

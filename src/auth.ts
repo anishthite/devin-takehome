@@ -1,8 +1,8 @@
+import { NextResponse } from "next/server";
 import NextAuth, { type DefaultSession } from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { DEMO_AUTH_SECRET, DEMO_TENANT_ID, isDemoMode } from "@/demo/mode";
-import { findPersona } from "@/demo/personas";
-import { DEMO_PROVIDER_ID, DemoProvider } from "@/demo/provider";
+import { DemoEntraProvider } from "@/demo/provider";
 import { entraIssuer, isFromTenant } from "@/lib/entra";
 import { parseRoles, type Role } from "@/lib/roles";
 
@@ -43,23 +43,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
   const tenantId = demo ? DEMO_TENANT_ID : requireEnv("ENTRA_TENANT_ID");
 
   return {
-    providers: [demo ? DemoProvider() : entraProvider()],
+    providers: [demo ? DemoEntraProvider() : entraProvider()],
     secret: demo ? (process.env.AUTH_SECRET ?? DEMO_AUTH_SECRET) : process.env.AUTH_SECRET,
     session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
     pages: { signIn: "/signin", error: "/signin" },
     callbacks: {
-      signIn({ account, profile }) {
-        if (account?.provider === DEMO_PROVIDER_ID) return demo;
+      signIn({ profile }) {
         if (!profile || !isFromTenant(profile.tid, tenantId)) return false;
         return parseRoles(profile.roles).length > 0;
       },
-      jwt({ token, account, profile, user }) {
-        if (account?.provider === DEMO_PROVIDER_ID) {
-          const persona = findPersona(user?.id);
-          token.oid = persona?.id;
-          token.tid = DEMO_TENANT_ID;
-          token.roles = persona ? [persona.role] : [];
-        } else if (profile) {
+      jwt({ token, profile }) {
+        if (profile) {
           token.oid = typeof profile.oid === "string" ? profile.oid : undefined;
           token.tid = typeof profile.tid === "string" ? profile.tid : undefined;
           token.roles = parseRoles(profile.roles);
@@ -73,9 +67,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
         session.user.roles = token.roles ?? [];
         return session;
       },
-      authorized({ auth }) {
-        if (!auth?.user) return false;
-        return demo === (auth.user.tenantId === DEMO_TENANT_ID);
+      authorized({ auth, request }) {
+        if (auth?.user && demo === (auth.user.tenantId === DEMO_TENANT_ID)) return true;
+        const signInUrl = request.nextUrl.clone();
+        signInUrl.pathname = "/signin";
+        signInUrl.search = "";
+        const path = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+        if (path !== "/") signInUrl.searchParams.set("callbackUrl", path);
+        return NextResponse.redirect(signInUrl);
       },
     },
   };

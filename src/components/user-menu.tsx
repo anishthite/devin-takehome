@@ -13,7 +13,7 @@ export function UserMenu({ user }: { user: Session["user"] }) {
       roleLabel={role ? ROLE_LABELS[role] : undefined}
       signOutAction={async () => {
         "use server";
-        await signOut({ redirectTo: "/signin" });
+        await signOut({ redirectTo: "/signin?signedOut=1" });
       }}
     />
   );

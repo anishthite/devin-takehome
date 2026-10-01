@@ -2,10 +2,9 @@ import { FlaskConical } from "lucide-react";
 import { signIn } from "@/auth";
 import { ROLE_LABELS } from "@/lib/roles";
 import { Alert, AlertDescription } from "@/ui-components/alert";
-import { Badge } from "@/ui-components/badge";
-import { Button } from "@/ui-components/button";
+import { PersonaButton } from "./persona-button";
 import { DEMO_PERSONAS } from "./personas";
-import { DEMO_PROVIDER_ID } from "./provider";
+import { DEMO_PROVIDER_ID } from "./idp/config";
 
 export function DemoSignInOptions({ redirectTo }: { redirectTo: string }) {
   return (
@@ -13,29 +12,21 @@ export function DemoSignInOptions({ redirectTo }: { redirectTo: string }) {
       <Alert variant="warning">
         <FlaskConical />
         <AlertDescription>
-          Demo mode: pick a persona. No Microsoft account needed, and all data is mocked.
+          Demo mode: pick a persona. Sign-in runs a real OIDC flow against a built-in mock Entra, and all
+          data is mocked.
         </AlertDescription>
       </Alert>
       {DEMO_PERSONAS.map((persona) => (
-        <form
+        <PersonaButton
           key={persona.id}
-          action={async () => {
+          name={persona.name}
+          blurb={persona.blurb}
+          roleLabel={ROLE_LABELS[persona.role]}
+          start={async (): Promise<string> => {
             "use server";
-            await signIn(DEMO_PROVIDER_ID, { personaId: persona.id, redirectTo });
+            return signIn(DEMO_PROVIDER_ID, { redirectTo, redirect: false }, { login_hint: persona.email });
           }}
-        >
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-auto w-full justify-between gap-3 bg-card px-4 py-3 text-left whitespace-normal"
-          >
-            <span>
-              <span className="block text-sm font-medium">{persona.name}</span>
-              <span className="block text-xs font-normal text-muted-foreground">{persona.blurb}</span>
-            </span>
-            <Badge variant="secondary">{ROLE_LABELS[persona.role]}</Badge>
-          </Button>
-        </form>
+        />
       ))}
     </div>
   );

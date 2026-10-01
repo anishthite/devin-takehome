@@ -44,4 +44,9 @@ npm install
 npm run dev:demo             # DEMO_MODE=true, no env vars needed
 ```
 
-Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra provider is replaced by an Auth.js credentials provider that signs you in as one of four mock personas (one per Ledger role), so the full proxy/session/role pipeline still runs. A banner marks every page as demo. Demo sessions carry `tenantId: "demo-tenant"` and are rejected when demo mode is off, and demo mode falls back to a fixed `AUTH_SECRET` only if none is set — never enable it in production.
+Everything demo-specific lives in `src/demo/`. With `DEMO_MODE=true` the Entra provider is swapped for a standard Auth.js OIDC provider pointed at a mock Entra IdP served by the app itself under `/demo-idp` (discovery, `authorize`, `token`, `userinfo`, `jwks`). Sign-in is a real authorization-code + PKCE (S256) flow with `state` and `nonce`; the IdP issues RS256 ID tokens with Entra-shaped claims (`oid`, `tid`, `roles`, `preferred_username`, `ver: "2.0"`) for one of four personas (one per Ledger role), so the same tenant, role, proxy and session checks run as in production. Picking a persona on `/signin` sends it as `login_hint`; without one the IdP shows its own account picker. The `/demo-idp` routes 404 when demo mode is off, demo sessions carry the demo tenant ID and are rejected outside demo mode, and demo mode falls back to a fixed `AUTH_SECRET` only if none is set — never enable it in production.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DEMO_IDP_URL` | `http://localhost:$PORT` | Origin the server uses to reach the mock IdP (discovery/token). |
+| `DEMO_PUBLIC_URL` | `DEMO_IDP_URL` | Origin the browser uses for `authorize`, if different (e.g. behind a proxy). |
